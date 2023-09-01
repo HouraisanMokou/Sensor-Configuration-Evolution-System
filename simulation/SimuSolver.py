@@ -13,7 +13,15 @@ class SimuTask:
     simulation task on single host
     '''
 
-    def __init__(self, id, CSCI_path, carla_path, port, scenario_info, input_path, output_path, count,
+    def __init__(self, id,
+                 CSCI_path,
+                 carla_path,
+                 port,
+                 scenario_info,
+                 input_path,
+                 output_path,
+                 rerun_input,
+                 rerun_output, count,
                  wait_record_time):
         self.CSCI_path = CSCI_path
         self.id = id
@@ -22,6 +30,8 @@ class SimuTask:
         self.wait_record_time = wait_record_time
         self.input_path = input_path
         self.output_path = output_path
+        self.rerun_input = rerun_input
+        self.rerun_output = rerun_output
         self.count = count
 
         if os.path.exists(self.output_path):
@@ -31,11 +41,13 @@ class SimuTask:
         self.scenario_info = scenario_info
         self.start_carla_cmd = f"{self.carla_path} -carla-rpc-port={self.port}"
         self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}  -r{self.wait_record_time}"
+        self.rerun_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.rerun_input} -o {self.rerun_output} -c {self.count}  -r{self.wait_record_time}"
         self.carla_pid = None
 
     def set_wait_record_time(self, wait_record_time):
         self.wait_record_time = wait_record_time
         self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}  -r{self.wait_record_time}"
+        self.rerun_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.rerun_input} -o {self.rerun_output} -c {self.count}  -r{self.wait_record_time}"
 
     def system_call(self, CSCI_cmd, carla_cmd, cnt=0):
         res_signal = os.system(CSCI_cmd)
@@ -63,6 +75,10 @@ class SimuTask:
         logger.info("Simulation module has start to simulate this generation")
         self.system_call(self.start_CSCI_cmd, self.start_carla_cmd)
 
+    def rerun(self):
+        logger.info("Simulation module has start to simulate this generation")
+        self.system_call(self.rerun_CSCI_cmd, self.start_carla_cmd)
+
 
 class SimuSolver:
 
@@ -70,6 +86,8 @@ class SimuSolver:
         self.sensor_list = system_settings["sensor_list"]
         self.input_yaml_path = system_settings["simu_input_dirname"]
         self.output_result_path = system_settings["simu_result_dirname"]
+        self.rerun_input_path = system_settings["simu_broken_rerun_input_dirname"]
+        self.rerun_output_path = system_settings["simu_broken_rerun_output_dirname"]
         self.workspace_path = system_settings["workspace_path"]
         self.name = name
 
@@ -86,6 +104,8 @@ class SimuSolver:
 
         self.input_yaml_path = os.path.abspath(os.path.join(self.workspace_path, self.name, self.input_yaml_path))
         self.output_result_path = os.path.abspath(os.path.join(self.workspace_path, self.name, self.output_result_path))
+        self.rerun_input_path = os.path.abspath(os.path.join(self.workspace_path, self.name, self.rerun_output_path))
+        self.rerun_output_path = os.path.abspath(os.path.join(self.workspace_path, self.name, self.rerun_output_path))
 
         self.scenario_name_list = []
         for scenario in self.scenario_info:
@@ -101,12 +121,14 @@ class SimuSolver:
                          self.scenario_info,
                          self.input_yaml_path,
                          self.output_result_path,
+                         self.rerun_input_path,
+                         self.rerun_output_path,
                          self.count,
                          self.wait_record_time)
             )
 
     # check whether the number of simulation result is correct and return simulation report
-    def check(self, population_meta):
+    def check(self, path, sensor_suffixes):
         '''
         :return: simulation_report={
             "broken_list": [] # population which fail to simulation
@@ -116,15 +138,14 @@ class SimuSolver:
             }...]
         }
         '''
-        names_list, sensor_suffixes = population_meta
-        pops_dir = os.listdir(self.output_result_path)
+        # names_list, sensor_suffixes = population_meta
+        pops_dir = os.listdir(path)
 
         broken_list = []
         pops = []
         for pop_dir in pops_dir:
             pop = {"phen": np.array(pop_dir.split('_')[1:]).astype('float')}
-            urls = []
-            scenario_dir = os.listdir(os.path.join(self.output_result_path, pop_dir))
+            scenario_dir = os.listdir(os.path.join(path, pop_dir))
             scenario_dir.sort()
             if scenario_dir != self.scenario_name_list:
                 logger.error(f"population [{pop_dir}] is broken")
@@ -132,16 +153,17 @@ class SimuSolver:
                 continue
             scenario_url_matrix = []
             for scenario in scenario_dir:
-                sensor_dir = os.listdir(os.path.join(self.output_result_path, pop_dir, scenario))
+                sensor_dir = os.listdir(os.path.join(path, pop_dir, scenario))
                 if len(sensor_dir) != len(sensor_suffixes):
                     logger.error(f"population [{pop_dir}] is broken")
                     broken_list.append(pop_dir)
                     continue
                 sensor_url_matrix = []
                 for idx, sensor in enumerate(sensor_dir):
-                    sensor_path = os.path.join(self.output_result_path, pop_dir, scenario, sensor)
+                    sensor_path = os.path.join(path, pop_dir, scenario, sensor)
                     result_name = os.listdir(sensor_path)
-                    slice_url_vector = [os.path.join(sensor_path, s) for s in result_name]
+                    slice_url_vector = [os.path.join(self.output_result_path, pop_dir, scenario, sensor, s) for s in
+                                        result_name]
                     if len(result_name) != self.count:
                         logger.error(f"population [{pop_dir}] is broken")
                         broken_list.append(pop_dir)
@@ -163,13 +185,49 @@ class SimuSolver:
     def run(self, population_meta):
         for task in self.simu_tasks:
             task.run()
-        res=self.check(population_meta)
+        res = self.check(self.output_result_path, population_meta[1])  # population_meta[1]: sensor_suffixes
+        if len(res["broken_list"]) != 0:
+            tmp_res = self.rerun(res["broken_list"], population_meta[1])
+            res["pop"] += tmp_res["pop"]
         logger.info("simulation module start to run")
         return res
 
     def setup(self, population_meta):
         for task in self.simu_tasks:
             task.setup()
-        res=self.check(population_meta)
+        res = self.check(self.output_result_path, population_meta[1])
+        if len(res["broken_list"]) != 0:
+            tmp_res = self.rerun(res["broken_list"], population_meta[1])
+            res["pop"] += tmp_res["pop"]
         logger.info("simulation module start to set up")
         return res
+
+    def rerun(self, broken_list, sensor_suffixes, iter=0):
+        logger.info(f"start to resimulate {len(broken_list)} files. [times: {iter+1}]")
+        if os.path.exists(self.rerun_input_path):
+            shutil.rmtree(self.rerun_input_path)
+        os.makedirs(self.rerun_input_path)
+        for pop_dirname in broken_list:
+            broken_yaml_path = os.path.join(self.input_yaml_path, f"{pop_dirname}.yaml")
+            rerun_input_path = os.path.join(self.rerun_input_path, f"{pop_dirname}.yaml")
+            shutil.copyfile(broken_yaml_path, rerun_input_path)
+        for task in self.simu_tasks:
+            task.rerun()
+        res = self.check(self.rerun_output_path, sensor_suffixes)
+        for broken_file in broken_list:
+            try:
+                shutil.rmtree(os.path.join(self.output_result_path, broken_file))
+                shutil.copy(os.path.join(self.rerun_output_path, broken_file),
+                            os.path.join(self.output_result_path, broken_file))
+            except:
+                logger.error("move rerun data fail")
+        if len(res["broken_list"]) != 0:
+            if iter < 10:
+                tmp_res = self.rerun(res["broken"], sensor_suffixes, iter + 1)
+                res["broken_list"] = tmp_res["broken_list"]
+                res["pop"] += tmp_res["pop"]
+            else:
+                logger.error("simulation module has reran but failed too much times")
+                assert 1 == 0, "simulation module has reran but failed too much times"
+        else:
+            return res

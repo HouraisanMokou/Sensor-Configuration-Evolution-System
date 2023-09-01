@@ -5,6 +5,8 @@ system:
   workspace_path: "./workspace"
   simu_input_dirname: "input"
   simu_result_dirname: "output"
+  simu_broken_rerun_input_dirname: "rerun_input"
+  simu_broken_rerun_output_dirname: "rerun_output"
   visual_result_dirname: "res"
   sensor_list: ["camera"]
 
