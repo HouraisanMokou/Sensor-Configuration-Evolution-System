@@ -5,6 +5,7 @@ from loguru import logger
 class Sensor:
     def __init__(self):
         self.points_path = "./config/points.txt"
+        self.offset=0.3
         self.min_rotation = -45
         self.max_rotation = 45
 
@@ -55,7 +56,7 @@ class EvolutionarySensor(Sensor):
     def parameter_decompress(self, compressed):
         dis = np.linalg.norm(self.valid_points[:, :2] - compressed, 2, axis=1)
         idxes = np.argpartition(dis, kth=self.kth)[:self.kth]
-        z_poses = np.mean(self.valid_points[idxes, 2])
+        z_poses = np.mean(self.valid_points[idxes, 2]+self.offset)
         return np.hstack([compressed, z_poses])
 
     def parameter_compress(self, decompressed):

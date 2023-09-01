@@ -13,7 +13,7 @@ class SensorConfigurationProblem(ea.Problem):
     def __init__(self, dim, varTypes, lb, ub):
         name = "sensor_configuration"
         M = 1
-        maxormins = [1]
+        maxormins = [0]
         super().__init__(
             name,
             M,

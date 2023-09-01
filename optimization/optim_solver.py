@@ -5,6 +5,7 @@ from util import IO
 import yaml
 import os
 from matplotlib import pyplot as plt
+from matplotlib import cm
 
 from .sensor import *
 from .geatpy_support import *
@@ -46,13 +47,17 @@ class GeatpySupportedOptimSolver(OptimSolver):
         self.ub = []
 
         self.sensors = []
+        self.sensors_pos_idxes = []
+        cnt = 0
         for sensor_name in self.sensor_list:
             sensor = DE_OptimSolver.sensor_dict[sensor_name]()
+            self.sensors_pos_idxes += [cnt, cnt + 1]
             self.sensors.append(sensor)
             self.dim += sensor.dim
             self.varTypes += sensor.varTypes
             self.lb += sensor.lb
             self.ub += sensor.ub
+            cnt += sensor.dim
 
     def update_logger(self, detail_report):
         self.__append_logger_elements("gen", self.iter)
@@ -82,9 +87,62 @@ class GeatpySupportedOptimSolver(OptimSolver):
                 plt.savefig(os.path.join(self.output_result_path, f"gen--{k}.png"))
                 plt.close()
         best_idx = np.argmax(self.state_logger['total'])
-        self.write_best(self.state_logger['phen'][best_idx],self.output_result_path)
-        with open(os.path.join(self.output_result_path,"state_logger.txt"),"w") as f:
+        self.write_best(self.state_logger['phen'][best_idx], self.output_result_path)
+        with open(os.path.join(self.output_result_path, "state_logger.txt"), "w") as f:
             f.write(str(self.state_logger))
+        if self.iter % 5 == 0:
+            logger.info(f"print pos-fitness relation figure for first sensor at [generation {self.iter}]")
+
+            test_pos = np.array(self.state_logger["phen"])[:,self.sensors_pos_idxes]
+            fig = plt.figure()
+            ax = plt.axes(projection='3d')
+            ax.set_xlim3d(-1.1, 0.25)
+            ax.set_ylim3d(-0.4, 0.4)
+            ax.set_zlim3d(1.45, 1.55)
+            plt.gca().set_box_aspect(
+                (np.max(self.sensors[0].valid_points[:, 0]) - np.min(self.sensors[0].valid_points[:, 0]),
+                 np.max(self.sensors[0].valid_points[:, 1]) - np.min(self.sensors[0].valid_points[:, 1]),
+                 np.max(self.sensors[0].valid_points[:, 2]) - np.min(self.sensors[0].valid_points[:, 2])))
+            shape = (400, 200)
+            kth = 5
+            x = np.linspace(-1.1, 0.25, shape[0])
+            y = np.linspace(-0.4, 0.4, shape[1])
+            X2, Y2 = np.meshgrid(x, -y)
+            f = np.zeros(shape)
+            z = np.zeros(shape)
+
+            for i in range(shape[0]):
+                for j in range(shape[1]):
+                    dis = np.linalg.norm(test_pos[:,:2] - np.array([x[i], y[j]]), 2, axis=1)
+                    idxes = np.argpartition(dis, kth=kth)[:kth].astype('int')
+                    tmp_z=0
+                    for idx in idxes:
+                        tmp_z+=self.sensors[0].parameter_decompress(test_pos[idx,:])[2]
+                    tmp_z=tmp_z/len(idxes)
+                    z[i, j] = tmp_z
+
+                    tmp_f = np.mean(np.array(self.state_logger["total"])[idxes])
+                    f[i, j] = tmp_f
+
+            f = f.T
+            z = z.T
+
+            f = (f - np.min(f)) / (np.max(f) - np.min(f))
+            f = cm.jet(f)
+            p = ax.plot_surface(X2, Y2, z, facecolors=f)
+            m = cm.ScalarMappable(cmap=cm.jet)
+            m.set_array(f)
+            cax = fig.add_axes(
+                [ax.get_position().x1 + 0.01,
+                 ax.get_position().y0 + (ax.get_position().y1 - ax.get_position().y0) * 0.2, 0.02,
+                 (ax.get_position().y1 - ax.get_position().y0) * 0.6])
+
+            plt.colorbar(m, cax=cax)
+            ax.grid(False)
+            ax.axis('off')
+            ax.view_init(30, -30)
+            plt.savefig(os.path.join(self.output_result_path, "pos-fitness relation"))
+            plt.close()
         logger.info(f"visual results of generation {self.iter} is output")
 
     def __add_logger_elements(self, key, elements):
@@ -108,7 +166,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
         return IO.write_configuration(phen, path, self.sensors)
 
     def write_best(self, phen, path):
-        return IO.write_best_configuration(phen,self.iter, path, self.sensors)
+        return IO.write_best_configuration(phen, self.iter, path, self.sensors)
 
 
 class DE_OptimSolver(GeatpySupportedOptimSolver):
@@ -142,7 +200,7 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         self.algorithm.setup()
         self.problem.set_Fields(self.algorithm.population.Field)
         self.algorithm.population.Phen = self.algorithm.population.decoding()
-        names_list = self.write(self.algorithm.population.Phen,self.output_yaml_path)
+        names_list = self.write(self.algorithm.population.Phen, self.output_yaml_path)
         logger.info("initial population (double sizes) is output and ready to simulate")
         return names_list, [s.result_suffix for s in self.sensors]
 
@@ -154,7 +212,7 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         self.problem.update_buffer(pops, fitness)
         self.algorithm.run_online()
         self.algorithm.population.Phen = self.algorithm.population.decoding()
-        name_list = self.write(self.algorithm.population.Phen,self.output_yaml_path)
+        name_list = self.write(self.algorithm.population.Phen, self.output_yaml_path)
         logger.info(f"generation [{self.iter}] is generated")
         self.update_logger(eval_result["detail_report"])
         return name_list, [s.result_suffix for s in self.sensors]
