@@ -28,7 +28,7 @@ class EvolutionSolver(BaseSolver):
         super().__init__(runtime)
         self.name = self.system_setting["name"] + "_" + self.optimization_setting["name"]
         self.simu_solver = SimuSolver(self.name, self.system_setting, self.simulation_setting)
-        self.evaluation_solver = TE_EvalSolver(self.name, self.system_setting, self.evaluation_setting)
+        self.evaluation_solver = PixEN_EvalSolver(self.name, self.system_setting, self.evaluation_setting)
         self.optimization_solver = DE_OptimSolver(self.name, self.system_setting, self.optimization_setting)
 
     def run(self):
@@ -37,10 +37,12 @@ class EvolutionSolver(BaseSolver):
         simu_report = self.simu_solver.setup(population_meta)
         eval_result = self.evaluation_solver.setup(simu_report)
 
-        for i in range(1, self.optimization_setting["parameters"]["generation"]):
+        for i in range(0, self.optimization_setting["parameters"]["generation"]):
             population_meta = self.optimization_solver.run(eval_result)
             simu_report = self.simu_solver.run(population_meta)
             eval_result = self.evaluation_solver.run(simu_report)
+
+        self.simu_solver.close()
 
 
 if __name__ == '__main__':

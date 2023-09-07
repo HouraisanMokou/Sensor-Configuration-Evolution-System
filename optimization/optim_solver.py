@@ -48,6 +48,9 @@ class GeatpySupportedOptimSolver(OptimSolver):
 
         self.sensors = []
         self.sensors_pos_idxes = []
+        self.algorithm = None
+        self.problem = None
+
         cnt = 0
         for sensor_name in self.sensor_list:
             sensor = DE_OptimSolver.sensor_dict[sensor_name]()
@@ -62,22 +65,57 @@ class GeatpySupportedOptimSolver(OptimSolver):
     def update_logger(self, detail_report):
         self.__append_logger_elements("gen", self.iter)
         self.__add_logger_elements("phen", detail_report["phen"])
+        for idx in range(len(detail_report["phen"][0])):
+            exp_attr = np.array(detail_report["phen"])[:, idx]
+            self.__append_logger_elements(f"{idx}_attr_max", np.max(exp_attr))
+            self.__append_logger_elements(f"{idx}_attr_min", np.min(exp_attr))
+            self.__append_logger_elements(f"{idx}_attr_mean", np.mean(exp_attr))
+            self.__append_logger_elements(f"{idx}_attr_std", np.std(exp_attr))
         for k in detail_report.keys():
             if k != "phen":
                 self.__add_logger_elements(k, detail_report[k])
                 self.__append_logger_elements(f"max_{k}", np.max(detail_report[k]))
                 self.__append_logger_elements(f"min_{k}", np.min(detail_report[k]))
                 self.__append_logger_elements(f"mean_{k}", np.mean(detail_report[k]))
+                self.__append_logger_elements(f"std_{k}", np.std(detail_report[k]))
+                # self.__append_logger_elements(f"max_{k}", np.max(self.state_logger[k]))
+                # self.__append_logger_elements(f"min_{k}", np.min(self.state_logger[k]))
+                # self.__append_logger_elements(f"mean_{k}", np.mean(self.state_logger[k]))
+        objV = np.array(self.algorithm.population.ObjV)
+        self.__append_logger_elements("fitness_maximum", np.max(objV))
+        self.__append_logger_elements("fitness_minimum", np.min(objV))
+        self.__append_logger_elements("fitness_mean", np.mean(objV))
+
         self.log()
 
     def log(self):
+        plt.figure()
+        plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_maximum"])
+        plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_minimum"])
+        plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_mean"])
+        plt.legend(["max", "min", "avg"])
+        plt.savefig(os.path.join(self.output_result_path, f"evolution.png"))
+        plt.close()
+
         without = ["gen", "phen"]
         for k in self.state_logger.keys():
-            if ("max_" in k) or ("min_" in k) or ("mean_" in k):
+            if ("max_" in k) or ("min_" in k) or ("mean_" in k) or ("std_" in k):
                 plt.figure()
                 plt.plot(self.state_logger["gen"], self.state_logger[k])
                 plt.savefig(os.path.join(self.output_result_path, f"gen--{k}.png"))
                 plt.close()
+            elif ("attr_max" in k):
+                real_k = str(k).split('attr_max')[0]
+                plt.figure()
+                plt.plot(self.state_logger["gen"], self.state_logger[f"{real_k}attr_max"])
+                plt.plot(self.state_logger["gen"], self.state_logger[f"{real_k}attr_min"])
+                plt.plot(self.state_logger["gen"], self.state_logger[f"{real_k}attr_mean"])
+                plt.plot(self.state_logger["gen"], self.state_logger[f"{real_k}attr_std"])
+                plt.legend(["max", "min", "avg", "std"])
+                plt.savefig(os.path.join(self.output_result_path, f"attr--{real_k}.png"))
+                plt.close()
+            elif ("attr_min" in k) or ("attr_mean" in k) or ("attr_std" in k) or ("fitness_maximum" in k) or ("fitness_minimum" in k) or ("fitness_mean" in k):
+                continue
             elif k not in without:
                 plt.figure()
                 plt.plot(self.state_logger["gen"], self.state_logger[f"max_{k}"])
@@ -93,7 +131,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
         if self.iter % 5 == 0:
             logger.info(f"print pos-fitness relation figure for first sensor at [generation {self.iter}]")
 
-            test_pos = np.array(self.state_logger["phen"])[:,self.sensors_pos_idxes]
+            test_pos = np.array(self.state_logger["phen"])[:, self.sensors_pos_idxes]
             fig = plt.figure()
             ax = plt.axes(projection='3d')
             ax.set_xlim3d(-1.1, 0.25)
@@ -103,26 +141,26 @@ class GeatpySupportedOptimSolver(OptimSolver):
                 (np.max(self.sensors[0].valid_points[:, 0]) - np.min(self.sensors[0].valid_points[:, 0]),
                  np.max(self.sensors[0].valid_points[:, 1]) - np.min(self.sensors[0].valid_points[:, 1]),
                  np.max(self.sensors[0].valid_points[:, 2]) - np.min(self.sensors[0].valid_points[:, 2])))
+            valid_places = self.sensors[0].valid_points
             shape = (400, 200)
             kth = 5
             x = np.linspace(-1.1, 0.25, shape[0])
             y = np.linspace(-0.4, 0.4, shape[1])
             X2, Y2 = np.meshgrid(x, -y)
+
             f = np.zeros(shape)
             z = np.zeros(shape)
 
             for i in range(shape[0]):
                 for j in range(shape[1]):
-                    dis = np.linalg.norm(test_pos[:,:2] - np.array([x[i], y[j]]), 2, axis=1)
+                    dis = np.linalg.norm(test_pos[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
                     idxes = np.argpartition(dis, kth=kth)[:kth].astype('int')
-                    tmp_z=0
-                    for idx in idxes:
-                        tmp_z+=self.sensors[0].parameter_decompress(test_pos[idx,:])[2]
-                    tmp_z=tmp_z/len(idxes)
-                    z[i, j] = tmp_z
-
                     tmp_f = np.mean(np.array(self.state_logger["total"])[idxes])
                     f[i, j] = tmp_f
+
+                    dis2 = np.linalg.norm(valid_places[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
+                    idxes2 = np.argpartition(dis2, kth=kth)[:kth].astype('int')
+                    z[i, j] = np.mean(valid_places[idxes2, 2])
 
             f = f.T
             z = z.T
@@ -160,9 +198,9 @@ class GeatpySupportedOptimSolver(OptimSolver):
     def write(self, phen, path):
         # return names of yaml files
         # phen = self.algorithm.population.Phen
-        if os.path.exists(self.output_yaml_path):
-            shutil.rmtree(self.output_yaml_path)
-        os.makedirs(self.output_yaml_path)
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.makedirs(path)
         return IO.write_configuration(phen, path, self.sensors)
 
     def write_best(self, phen, path):
@@ -200,7 +238,7 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         self.algorithm.setup()
         self.problem.set_Fields(self.algorithm.population.Field)
         self.algorithm.population.Phen = self.algorithm.population.decoding()
-        names_list = self.write(self.algorithm.population.Phen, self.output_yaml_path)
+        names_list = self.write(self.algorithm.population.Phen, os.path.join(self.output_yaml_path, str(self.iter)))
         logger.info("initial population (double sizes) is output and ready to simulate")
         return names_list, [s.result_suffix for s in self.sensors]
 
@@ -210,9 +248,10 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         pops = report_for_update[0]
         fitness = report_for_update[1]
         self.problem.update_buffer(pops, fitness)
-        self.algorithm.run_online()
+        experiment_pop = self.algorithm.run_online()
+        experiment_pop.Phen = experiment_pop.decoding()
         self.algorithm.population.Phen = self.algorithm.population.decoding()
-        name_list = self.write(self.algorithm.population.Phen, self.output_yaml_path)
+        name_list = self.write(experiment_pop.Phen, os.path.join(self.output_yaml_path, str(self.iter)))
         logger.info(f"generation [{self.iter}] is generated")
         self.update_logger(eval_result["detail_report"])
         return name_list, [s.result_suffix for s in self.sensors]

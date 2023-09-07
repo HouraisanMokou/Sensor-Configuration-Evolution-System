@@ -5,7 +5,7 @@ from loguru import logger
 class Sensor:
     def __init__(self):
         self.points_path = "./config/points.txt"
-        self.offset=0.3
+        self.offset = 0.3
         self.min_rotation = -45
         self.max_rotation = 45
 
@@ -56,7 +56,7 @@ class EvolutionarySensor(Sensor):
     def parameter_decompress(self, compressed):
         dis = np.linalg.norm(self.valid_points[:, :2] - compressed, 2, axis=1)
         idxes = np.argpartition(dis, kth=self.kth)[:self.kth]
-        z_poses = np.mean(self.valid_points[idxes, 2]+self.offset)
+        z_poses = np.mean(self.valid_points[idxes, 2] + self.offset)
         return np.hstack([compressed, z_poses])
 
     def parameter_compress(self, decompressed):
@@ -143,13 +143,13 @@ class Camera(EvolutionarySensor):
         super().__init__()
         self.blueprint_name = "sensor.camera.rgb"
         # rotation
-        self.min_rotation_pitch = -15
-        self.max_rotation_pitch = 15
-        self.min_rotation_yaw = -90
-        self.max_rotation_yaw = 90
+        self.min_rotation_pitch = -10
+        self.max_rotation_pitch = 10
+        self.min_rotation_yaw = -15
+        self.max_rotation_yaw = 15
         # attribute
-        self.image_size_x = 1920
-        self.image_size_y = 1920
+        self.image_size_x = 720
+        self.image_size_y = 720
         self.min_fov = 75
         self.max_fov = 135
 
@@ -157,13 +157,13 @@ class Camera(EvolutionarySensor):
         self.varTypes = [0, 0, 0, 0, 0]
         self.lb = [np.min(self.valid_points[:, 0]),
                    np.min(self.valid_points[:, 1]),
-                   self.min_rotation,
-                   self.min_rotation,
+                   self.min_rotation_pitch,
+                   self.min_rotation_yaw,
                    self.min_fov]
         self.ub = [np.max(self.valid_points[:, 0]),
                    np.max(self.valid_points[:, 1]),
-                   self.max_rotation,
-                   self.max_rotation,
+                   self.max_rotation_pitch,
+                   self.max_rotation_yaw,
                    self.max_fov]
         self.result_suffix = ".png"
 
@@ -186,3 +186,41 @@ class Camera(EvolutionarySensor):
 
     def compose_pos(self, pos_line):
         return [pos_line["x"], pos_line["y"], pos_line["pitch"], pos_line["yaw"]]
+
+
+class NonRotationCamera(EvolutionarySensor):
+    '''
+    phen:[x,y]
+    '''
+
+    def __init__(self):
+        super().__init__()
+        self.blueprint_name = "sensor.camera.rgb"
+        # rotation
+
+        # attribute
+        self.image_size_x = 1920
+        self.image_size_y = 1920
+
+        self.dim = 2
+        self.varTypes = [0, 0]
+        self.lb = [np.min(self.valid_points[:, 0]),
+                   np.min(self.valid_points[:, 1])]
+        self.ub = [np.max(self.valid_points[:, 0]),
+                   np.max(self.valid_points[:, 1])]
+        self.result_suffix = ".png"
+
+        self.parameters_length_debug()
+
+    def decompose_attr(self, phen_slice):
+        return {
+            "image_size_x": self.image_size_x,
+            "image_size_y": self.image_size_y,
+        }
+
+    def decompose_pos(self, phen_slice):
+        pos = self.parameter_decompress(phen_slice[:2])
+        return {"x": float(pos[0]), "y": float(pos[1]), "z": float(pos[2]), "pitch": 0, "roll": 0, "yaw": 0}
+
+    def compose_pos(self, pos_line):
+        return [pos_line["x"], pos_line["y"]]

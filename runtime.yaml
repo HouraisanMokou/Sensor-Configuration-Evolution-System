@@ -15,7 +15,7 @@ simulation:
   CSCI_path: "./CSCI"
   carla_paths: ["E:\\WindowsNoEditor\\CarlaUE4.exe"]
   ports: [2000]
-  slice_count: 3
+  slice_count: 5
   wait_record_time: 3
   scenario_info:
     - name: 'test_scenario5'
@@ -33,7 +33,7 @@ evaluation:
 optimization:
   name: "DE"
   parameters:
-    nand: 6
+    nand: 20
     generation: 30
-    F: 0.3
-    CR: 0.3
+    F: 0.25
+    CR: 0.7

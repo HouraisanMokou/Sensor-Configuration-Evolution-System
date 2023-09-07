@@ -13,7 +13,7 @@ class SensorConfigurationProblem(ea.Problem):
     def __init__(self, dim, varTypes, lb, ub):
         name = "sensor_configuration"
         M = 1
-        maxormins = [0]
+        maxormins = [-1]
         super().__init__(
             name,
             M,
@@ -41,7 +41,7 @@ class SensorConfigurationProblem(ea.Problem):
                 np.hstack([self.fitness_buffer, np.array([f])])
             self.pop_buffer = pop if self.pop_buffer is None else \
                 np.vstack([self.pop_buffer, pop])
-        if len(self.fitness_buffer) > 50:
+        if len(self.fitness_buffer) > 500:
             mu = np.mean(self.fitness_buffer)
             sigma = np.std(self.fitness_buffer)
             lb = mu - 3 * sigma
@@ -100,32 +100,36 @@ class DE_currentToBest_1_L_online(soea_DE_currentToBest_1_L_templet):
             F = F if F is not None else 0.3
             CR = CR if CR is not None else 0.6
             self.mutOper = ea.Mutde(F=F)  # 生成差分变异算子对象
-            self.muOpter2 = ea.Mutde(F=F / 2)
-            self.muOpter3 = ea.Mutde(F=F / 3)
+            self.muOpter2 = ea.Mutde(F=F )
+            self.muOpter3 = ea.Mutde(F=F ) # F delay
             self.recOper = ea.Xovexp(XOVR=CR, Half_N=True)  # 生成指数交叉算子对象，这里的XOVR即为DE中的Cr
         else:
             raise RuntimeError('编码方式必须为''RI''.')
+        self.experiment_pop = None
 
     def setup(self, prophetPop=None):
         population = self.population
-        self.NIND=population.sizes
-        NIND = population.sizes*2
+        self.NIND = population.sizes
+        NIND = population.sizes * 2
         self.initialization()
         population.initChrom(NIND)
         self.population = population
         return self.population
 
     def run_online(self):
-        population = self.population
+        population = self.population if self.experiment_pop is None else self.population+self.experiment_pop
         NIND = self.NIND
         self.call_aimFunc(population)  # 计算种群的目标函数值
         population.FitnV = ea.scaling(population.ObjV, population.CV, self.problem.maxormins)  # 计算适应度
 
         # select
         population = population[ea.selecting('otos', population.FitnV, NIND)]  # 采用One-to-One Survivor选择，产生新一代种群
+        # choose_index = ea.tour(population.FitnV, NIND, 2)
+        # population=population[choose_index] # tour select
+
+        population.FitnV = ea.scaling(population.ObjV, population.CV, self.problem.maxormins)
         self.population = population
         self.problem.evaluation(self.population)
-        self.population.FitnV = ea.scaling(self.population.ObjV, self.population.CV, self.problem.maxormins)  # 计算适应度
         self.terminated(self.population)
 
         # mute and crossover
@@ -140,5 +144,6 @@ class DE_currentToBest_1_L_online(soea_DE_currentToBest_1_L_templet):
         experimentPop.Chrom = mutOper.do(population.Encoding, population.Chrom, population.Field,
                                          [r0, None, None, r_best, r0])  # 变异
         experimentPop.Chrom = self.recOper.do(np.vstack([population.Chrom, experimentPop.Chrom]))  # 重组
+        self.experiment_pop=experimentPop
 
-        return self.population + experimentPop
+        return experimentPop
