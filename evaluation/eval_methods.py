@@ -20,6 +20,9 @@ class EvaluationMethods:
         :return: float, result of this method
         """
 
+    def set_sensors(self, sensors):
+        self.sensors = sensors
+
 
 """
 ===================
@@ -124,8 +127,6 @@ class CameraCoverage(EvaluationMethods):
                                                                                                 2] ** 2 > 16,
                               :]
 
-    def set_sensors(self,sensors):
-        self.sensors=sensors
     def run(self, simu_ele):
         phen = simu_ele["phen"]
         cnt = 0
@@ -158,10 +159,10 @@ class CameraCoverage(EvaluationMethods):
             mask4 = (tans[:, 0] < ub_above)
             mask5 = (tans[:, 1] < ub_lateral)
             mask = mask1
-            for m in [mask2, mask3, mask4, mask5,mask6]:
+            for m in [mask2, mask3, mask4, mask5, mask6]:
                 mask = np.logical_and(mask, m)
-            total_mask = mask.astype('float') if total_mask is None else total_mask+(mask.astype('float'))
-        #total_mask = total_mask[total_mask!=0]
-        #score = np.sum((2-0.5**(total_mask-1))/(2-0.5**(len(self.sensors)-1)))
+            total_mask = mask.astype('float') if total_mask is None else total_mask + (mask.astype('float'))
+        # total_mask = total_mask[total_mask!=0]
+        # score = np.sum((2-0.5**(total_mask-1))/(2-0.5**(len(self.sensors)-1)))
         score = np.sum(np.log2(1 + total_mask))
-        return score/917825.6544354344  # 931260.7241582343 is prior std
+        return score / 917825.6544354344  # 931260.7241582343 is prior std

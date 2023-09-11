@@ -22,7 +22,7 @@ class BaseSolver:
         pass
 
 
-class EvolutionSolver(BaseSolver):
+class EvolutionSolver(BaseSolver):  # geatpy support
 
     def __init__(self, runtime):
         super().__init__(runtime)
@@ -30,8 +30,7 @@ class EvolutionSolver(BaseSolver):
         self.simu_solver = SimuSolver(self.name, self.system_setting, self.simulation_setting)
         self.evaluation_solver = PixEN_EvalSolver(self.name, self.system_setting, self.evaluation_setting)
         self.optimization_solver = DE_OptimSolver(self.name, self.system_setting, self.optimization_setting)
-
-        self.evaluation_solver.evaluation_method2.set_sensors(self.optimization_solver.sensors)
+        self.evaluation_solver.set_sensors(self.optimization_solver.sensors)
 
     def run(self):
         logger.info("setup initial population")

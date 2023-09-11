@@ -19,9 +19,13 @@ class EvalSolver:
 
         self.input_result_path = os.path.abspath(os.path.join(self.workspace_path, self.name, self.input_result_path))
         self.sensors = None
+        self.eval_methods = None
 
     def set_sensors(self, sensors):
         self.sensors = sensors
+        if self.eval_methods is not None:
+            for eval_method in self.eval_methods:
+                eval_method.set_sensors = sensors
 
     def eval_pop(self, simu_ele):
         return dict()
@@ -87,10 +91,12 @@ class TE_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
         super().__init__(name, system_settings, settings)
-        self.evaluation_method = TemporalEntropy()
+        self.eval_methods = [
+            TemporalEntropy()
+        ]
 
     def eval_pop(self, simu_ele):
-        score = self.evaluation_method.run(simu_ele)
+        score = self.eval_methods[0].run(simu_ele)
         return {
             "phen": simu_ele["phen"],
             "total": score
@@ -101,12 +107,14 @@ class PixEN_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
         super().__init__(name, system_settings, settings)
-        self.evaluation_method = PixEntropy()
-        self.evaluation_method2 = CameraCoverage()
+        self.eval_methods = [
+            PixEntropy(),
+            CameraCoverage()
+        ]
 
     def eval_pop(self, simu_ele):
-        pixen_score = self.evaluation_method.run(simu_ele)
-        coverage_score = self.evaluation_method2.run(simu_ele)
+        pixen_score = self.eval_methods[0].run(simu_ele)
+        coverage_score = self.eval_methods[1].run(simu_ele)
         return {
             "phen": simu_ele["phen"],
             "total": pixen_score + coverage_score,
@@ -119,10 +127,12 @@ class CameraCoverage_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
         super().__init__(name, system_settings, settings)
-        self.evaluation_method2 = CameraCoverage()
+        self.eval_methods = [
+            CameraCoverage()
+        ]
 
     def eval_pop(self, simu_ele):
-        coverage_score = self.evaluation_method2.run(simu_ele)
+        coverage_score = self.eval_methods[0].run(simu_ele)
         return {
             "phen": simu_ele["phen"],
             "total": coverage_score,
