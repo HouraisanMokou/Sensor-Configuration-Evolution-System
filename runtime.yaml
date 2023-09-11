@@ -8,7 +8,7 @@ system:
   simu_broken_rerun_input_dirname: "rerun_input"
   simu_broken_rerun_output_dirname: "rerun_output"
   visual_result_dirname: "res"
-  sensor_list: ["camera"]
+  sensor_list: ["camera","camera"]
 
 # simulation setting
 simulation:

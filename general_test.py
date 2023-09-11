@@ -8,6 +8,8 @@ import random
 import numpy as np
 import open3d as o3d
 from optimization.sensor import Lidar, Camera
+from collections import Counter
+import itertools
 
 import cv2
 
@@ -27,7 +29,7 @@ workspace = './workspace'
 test_file = './CSCI'
 filename = f'general_'
 
-shape = (20, 10)
+shape = (10,20)
 with open('./config/points.txt', 'r') as f:
     points3 = np.array(eval(f.read()))
 
@@ -44,7 +46,7 @@ for i in range(shape[0]):
         dis = np.linalg.norm(points3[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
         idxes = np.argpartition(dis, kth=kth)[:kth]
         tmp_z = np.mean(points3[idxes, 2])
-        z[i, j] = tmp_z + 0.3
+        z[i, j] = 1.7 #tmp_z + 0.3
         lines.append(tuple([x[i], y[j], z[i, j], 0, 0, 0]))
 z = z.T
 
@@ -166,24 +168,36 @@ def edge_entropy(data):
     return phi1 - phi2
 
 
+fov = 120
+# interest_space_above = np.dstack(np.meshgrid(np.arange(-1000, 1000), np.arange(-200, 200))).reshape(-1, 2) * 0.1
+# interest_space_lateral = np.dstack(np.meshgrid(np.arange(-1000, 1000), np.arange(0, 40))).reshape(-1, 2) * 0.1
+t1 = time.time()
+interest_space = np.array(list(itertools.product(np.arange(-500, 500),np.arange(-200, 200),np.arange(0,40))))
+print(time.time() - t1)
+
+
 def cal_fitness(phen, path, id=0):
+    # voxel_len = 0.1
+    # usable = interest_space[interest_space[:, 0] > phen[0] / voxel_len, :]
+    # tan1 = (usable[:, 1] - phen[1] / voxel_len) / (usable[:, 0] - phen[0] / voxel_len)
+    # tan2 = (usable[:, 2] - phen[2] / voxel_len) / (usable[:, 0] - phen[0] / voxel_len)
+    # tans = np.vstack([tan1, tan2]).T
+    # half_fov = fov / 2
+    # lb_lateral = np.tan(-phen[3] - half_fov)
+    # ub_lateral = np.tan(phen[3] + half_fov)
+    # lb_above = np.tan(-phen[4] - half_fov)
+    # ub_above = np.tan(phen[4] + half_fov)
+    # in_coverage = tans[tans[:, 0] > lb_above, :]
+    # in_coverage = in_coverage[in_coverage[:, 0] < ub_above, :]
+    # in_coverage = in_coverage[in_coverage[:, 1] > lb_lateral, :]
+    # in_coverage = in_coverage[in_coverage[:, 1] < ub_lateral, :]
+    # c = in_coverage.shape[0]
+    # print(f"finish for {id}: [{phen}] [{c}]")
     urls = [os.path.join(path, f, s, i) for f in os.listdir(os.path.join(path)) for s in
             os.listdir(os.path.join(path, f)) for i in
             os.listdir(os.path.join(path, f, s))]
     print(urls)
     if "png" in urls[0]:
-        # for url_idx, url in enumerate(urls):
-        #     if url_idx != 0:
-        #         continue
-        #     data = cv2.imread(url)
-        #     data = cv2.resize(data, (256, 256))
-        #     data = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
-        #     edge = cv2.Canny(data, 100, 200)
-        #     m = 3
-        #     t1 = time.time()
-        #     h = edge_entropy(edge)
-        #     print(time.time() - t1)
-        #     c = h
         cs = []
         for idx, url in enumerate(urls):
             if idx % 3 != 0:
@@ -194,60 +208,9 @@ def cal_fitness(phen, path, id=0):
             p = bins / np.sum(bins)
             h = -np.sum(p * np.log2(p))
             cs.append(h)
-        c1 = np.mean(cs)
+        c = np.mean(cs)
 
-        # size = 1920
-        # data = None
-        # for url in urls:
-        #     if data is None:
-        #         data = np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]
-        #     else:
-        #         data = np.concatenate([data, np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]],
-        #                               axis=2)
-        #     print(data.shape)
-        # data = data.astype("float")
-        # difference = np.abs(np.diff(data, axis=2))
-        # difference[difference==0]=1e-8
-        # ss = 1 / (difference ** 2)
-        # s = np.sum(ss, axis=2)
-        # sigma_pix = np.sqrt(1 / s)
-        # h = np.log(sigma_pix)
-        # c2 = np.mean(h)
-        # image_h = (h-np.min(h))/(np.max(h)-np.min(h))*256
-
-        # plt.imshow(image_h)
-        # plt.show()
-        # mean_pix=np.mean(data,axis=2)
-        # sigma_pix = np.std(data, axis=2)
-        # sigma_pix[sigma_pix<1]=1
-        # h = np.log(sigma_pix)
-        # c= np.mean(h)
-
-        # bin_length = 256/3
-        # size = 256
-        # data = None
-        # for url in urls:
-        #     if data is None:
-        #         data = np.round(
-        #             (np.asarray(Image.open(url).convert("L").resize((size, size)) ))/bin_length).astype("int")[:,:,None]
-        #     else:
-        #         data = np.concatenate([data, np.round(
-        #             (np.asarray(Image.open(url).convert("L").resize((size, size))))/bin_length).astype("int")[:,:,None]],axis=2)
-        #     print(data.shape)
-        # zeros = np.zeros((size, size))
-        # for i in range(size):
-        #     for j in range(size):
-        #         b = data[i, j, :]
-        #         b = np.bincount(b).astype("float")
-        #         b=b[b!=0]
-        #         b /= np.sum(b)
-        #         h = -np.sum(b * np.log(b))
-        #         zeros[i, j] = h
-        # c = np.mean(zeros)
-        # if id % 20 == 10:
-        #     plt.imshow(zeros)
-        #     plt.show()
-        return c1,(None,None)  # (c1-7.399882366371551)/0.06656416621604876+(c2+11.967923140752056)/4.244883952187187, (c1,c2)  # image_h
+    return c, (None, None)
 
 
 def single_test():
@@ -299,10 +262,10 @@ fitness = np.array(fitness)
 m = np.mean(fitness)
 n = np.std(fitness)
 print(m, n)
-ub = np.mean(fitness) + 3 * np.std(fitness)
-lb = np.mean(fitness) - 3 * np.std(fitness)
-fitness[fitness > ub] = m
-fitness[fitness < lb] = m
+# ub = np.mean(fitness) + 3 * np.std(fitness)
+# lb = np.mean(fitness) - 3 * np.std(fitness)
+# fitness[fitness > ub] = m
+# fitness[fitness < lb] = m
 # fitness = -fitness  # 要反转一下，强度图越大越好
 # fitness = 1/fitness#-np.sqrt(np.array(fitness))
 fitness = (fitness - np.min(fitness)) / (np.max(fitness) - np.min(fitness))
@@ -319,70 +282,23 @@ ax.set_ylim3d(-0.4, 0.4)
 ax.set_zlim3d(1.45, 1.55)
 plt.gca().set_box_aspect((1.35, 0.8, 0.1))
 
-# mm=-float('inf')
-# mm_p=None
-# f = np.zeros(shape)
-# for i in range(shape[0]):
-#     for j in range(shape[1]):
-#         f[i,j] = fitness_dict[tuple([x[i], y[j], z.T[i, j], 0])]
-#         if f[i,j] > mm:
-#                mm =f[i,j]
-#                mm_p=(i,j)
-# print(mm,mm_p)
-# f=f.T
-#
-# from matplotlib import cm
-#
-# f = (f - np.min(f)) / (np.max(f) - np.min(f))
-# f = cm.jet(f)
-# p = ax.plot_surface(X, Y, z, facecolors=f)
-# m = cm.ScalarMappable(cmap=cm.jet)
-# m.set_array(f)
-# cax = fig.add_axes(
-#     [ax.get_position().x1 + 0.01, ax.get_position().y0 + (ax.get_position().y1 - ax.get_position().y0) * 0.2, 0.02,
-#      (ax.get_position().y1 - ax.get_position().y0) * 0.6])
-#
-# plt.colorbar(m, cax=cax)
-# # ax.grid(False)
-# # ax.axis('off')
-# ax.view_init(30, -30)
-# plt.show()
-
-shape = (400, 200)
-kth = 5
-x = np.linspace(-1.1, 0.25, shape[0])
-y = np.linspace(-0.4, 0.4, shape[1])
-X2, Y2 = np.meshgrid(x, -y)
-print(X2.shape)
-lines = []
+mm=-float('inf')
+mm_p=None
 f = np.zeros(shape)
-z = np.zeros(shape)
-
-mm = -float('inf')
-mm_p = None
 for i in range(shape[0]):
     for j in range(shape[1]):
-        dis = np.linalg.norm(test[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
-        idxes = np.argpartition(dis, kth=kth)[:kth]
-        tmp_z = np.mean(test[idxes, 2])
-        z[i, j] = tmp_z
-
-        tmp_f = np.mean(test[idxes, 3])
-        f[i, j] = tmp_f
-
-        if f[i, j] > mm:
-            mm = f[i, j]
-            mm_p = (i, j)
-print(mm, mm_p)
-
-f = f.T
-z = z.T
+        f[i,j] = fitness_dict[tuple([x[i], y[j], z.T[i, j], 0,0,0])]
+        if f[i,j] > mm:
+               mm =f[i,j]
+               mm_p=(i,j)
+print(mm,mm_p)
+f=f.T
 
 from matplotlib import cm
 
 f = (f - np.min(f)) / (np.max(f) - np.min(f))
 f = cm.jet(f)
-p = ax.plot_surface(X2, Y2, z, facecolors=f)
+p = ax.plot_surface(X, Y, z, facecolors=f)
 m = cm.ScalarMappable(cmap=cm.jet)
 m.set_array(f)
 cax = fig.add_axes(
@@ -393,5 +309,52 @@ plt.colorbar(m, cax=cax)
 # ax.grid(False)
 # ax.axis('off')
 ax.view_init(30, -30)
-plt.savefig('res.png')
 plt.show()
+
+# shape = (400, 200)
+# kth = 5
+# x = np.linspace(-1.1, 0.25, shape[0])
+# y = np.linspace(-0.4, 0.4, shape[1])
+# X2, Y2 = np.meshgrid(x, -y)
+# print(X2.shape)
+# lines = []
+# f = np.zeros(shape)
+# z = np.zeros(shape)
+#
+# mm = -float('inf')
+# mm_p = None
+# for i in range(shape[0]):
+#     for j in range(shape[1]):
+#         dis = np.linalg.norm(test[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
+#         idxes = np.argpartition(dis, kth=kth)[:kth]
+#         tmp_z = np.mean(test[idxes, 2])
+#         z[i, j] = tmp_z
+#
+#         tmp_f = np.mean(test[idxes, 3])
+#         f[i, j] = tmp_f
+#
+#         if f[i, j] > mm:
+#             mm = f[i, j]
+#             mm_p = (i, j)
+# print(mm, mm_p)
+#
+# f = f.T
+# z = z.T
+#
+# from matplotlib import cm
+#
+# f = (f - np.min(f)) / (np.max(f) - np.min(f))
+# f = cm.jet(f)
+# p = ax.plot_surface(X2, Y2, z, facecolors=f)
+# m = cm.ScalarMappable(cmap=cm.jet)
+# m.set_array(f)
+# cax = fig.add_axes(
+#     [ax.get_position().x1 + 0.01, ax.get_position().y0 + (ax.get_position().y1 - ax.get_position().y0) * 0.2, 0.02,
+#      (ax.get_position().y1 - ax.get_position().y0) * 0.6])
+#
+# plt.colorbar(m, cax=cax)
+# # ax.grid(False)
+# # ax.axis('off')
+# ax.view_init(30, -30)
+# plt.savefig('res.png')
+# plt.show()

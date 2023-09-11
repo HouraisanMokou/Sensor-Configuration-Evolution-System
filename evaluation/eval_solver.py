@@ -6,6 +6,7 @@ import os
 from matplotlib import pyplot as plt
 from PIL import Image
 import open3d as o3d
+from .eval_methods import *
 
 
 class EvalSolver:
@@ -17,6 +18,10 @@ class EvalSolver:
         self.workspace_path = system_settings["workspace_path"]
 
         self.input_result_path = os.path.abspath(os.path.join(self.workspace_path, self.name, self.input_result_path))
+        self.sensors = None
+
+    def set_sensors(self, sensors):
+        self.sensors = sensors
 
     def eval_pop(self, simu_ele):
         return dict()
@@ -82,63 +87,13 @@ class TE_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
         super().__init__(name, system_settings, settings)
+        self.evaluation_method = TemporalEntropy()
 
     def eval_pop(self, simu_ele):
-        urls = simu_ele["urls"]
-        data = None
-
-        size = 256
-        camera_c = 0
-        lidar_c = 0
-        camera_cnt = 0
-        lidar_cnt = 0
-        for scenario in urls:
-            for sensor in scenario:
-                if "png" in sensor[0]:
-                    for url in sensor:
-                        if data is None:
-                            data = np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]
-                        else:
-                            data = np.concatenate(
-                                [data, np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]],
-                                axis=2)
-                    camera_cnt += 1
-                    data = data.astype("float")
-                    difference = np.abs(np.diff(data, axis=2))
-                    difference[difference == 0] = 1e-8
-                    ss = 1 / (difference ** 2)
-                    s = np.sum(ss, axis=2)
-                    sigma_pix = np.sqrt(1 / s)
-                    h = np.log(sigma_pix)
-                    camera_c += np.mean(h)
-                elif "ply" in sensor[0]:
-                    continue
-                    # for url in sensor:
-                    #     if data is None:
-                    #         data = np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]
-                    #     else:
-                    #         data = np.concatenate(
-                    #             [data, np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]],
-                    #             axis=2)
-                    # camera_cnt += 1
-                    # data = data.astype("float")
-                    # difference = np.abs(np.diff(data, axis=2))
-                    # difference[difference == 0] = 1e-8
-                    # ss = 1 / (difference ** 2)
-                    # s = np.sum(ss, axis=2)
-                    # sigma_pix = np.sqrt(1 / s)
-                    # h = np.log(sigma_pix)
-                    # camera_c += np.mean(h)
-
-        if camera_cnt != 0 and lidar_cnt != 0:
-            c = camera_c / camera_cnt + lidar_c / lidar_cnt
-        elif camera_cnt == 0:
-            c = lidar_c / lidar_cnt
-        else:
-            c = camera_c / camera_cnt
+        score = self.evaluation_method.run(simu_ele)
         return {
             "phen": simu_ele["phen"],
-            "total": c
+            "total": score
         }
 
 
@@ -146,32 +101,29 @@ class PixEN_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
         super().__init__(name, system_settings, settings)
+        self.evaluation_method = PixEntropy()
+        self.evaluation_method2 = CameraCoverage()
 
     def eval_pop(self, simu_ele):
-        urls = simu_ele["urls"]
-        data = None
-
-        size = 256
-        camera_c = 0
-        lidar_c = 0
-        camera_cnt = 0
-        lidar_cnt = 0
-        for scenario in urls:
-            for sensor in scenario:
-                if "png" in sensor[0]:
-                    cs = []
-                    for url in sensor:
-                        data = np.asarray(Image.open(url).convert('L'))
-                        bins = np.bincount(data.flatten())
-                        bins = bins[bins != 0]
-                        p = bins / np.sum(bins)
-                        h = -np.sum(p * np.log2(p))
-                        cs.append(h)
-                    c1 = np.mean(cs)
-                    camera_c += c1
-                    camera_cnt += 1
-
+        pixen_score = self.evaluation_method.run(simu_ele)
+        coverage_score = self.evaluation_method2.run(simu_ele)
         return {
             "phen": simu_ele["phen"],
-            "total": camera_c / camera_cnt
+            "total": pixen_score + coverage_score,
+            "pixEn": pixen_score,
+            "coverage": coverage_score
+        }
+
+
+class CameraCoverage_EvalSolver(EvalSolver):
+
+    def __init__(self, name, system_settings, settings):
+        super().__init__(name, system_settings, settings)
+        self.evaluation_method2 = CameraCoverage()
+
+    def eval_pop(self, simu_ele):
+        coverage_score = self.evaluation_method2.run(simu_ele)
+        return {
+            "phen": simu_ele["phen"],
+            "total": coverage_score,
         }
