@@ -134,6 +134,7 @@ class CameraCoverage(EvaluationMethods):
         total_mask = None
         for sensor in self.sensors:
             phen_slice = phen[cnt:cnt + sensor.dim]
+            sensor_z_pos=sensor.parameter_decompress(phen_slice)[2]
             cnt += sensor.dim
 
             fov = phen_slice[-1]
@@ -145,14 +146,14 @@ class CameraCoverage(EvaluationMethods):
             mask6 = (usable[:, 0] > phen[0] / voxel_len)
             usable[np.logical_not(mask6), :] = 1
             tan1 = (usable[:, 1] - phen_slice[1] / voxel_len) / (usable[:, 0] - phen_slice[0] / voxel_len)
-            tan2 = (usable[:, 2] - phen_slice[2] / voxel_len) / (usable[:, 0] - phen_slice[0] / voxel_len)
+            tan2 = (usable[:, 2] - sensor_z_pos / voxel_len) / (usable[:, 0] - phen_slice[0] / voxel_len)
             tans = np.vstack([tan1, tan2]).T
             half_fov = fov / 2
-            lb_lateral = np.tan((-phen_slice[3] - half_fov) * np.pi / 180)
-            ub_lateral = np.tan((phen_slice[3] + half_fov) * np.pi / 180)
-            lb_above = np.tan((-phen_slice[4] - half_fov) * np.pi / 180)
-            lb_above2 = (z_min - phen_slice[2]) / (x_max - phen_slice[0])
-            ub_above = np.tan((phen_slice[4] + half_fov) * np.pi / 180)
+            lb_lateral = np.tan((-phen_slice[2] - half_fov) * np.pi / 180)
+            ub_lateral = np.tan((phen_slice[2] + half_fov) * np.pi / 180)
+            lb_above = np.tan((-phen_slice[3] - half_fov) * np.pi / 180)
+            lb_above2 = (z_min - sensor_z_pos) / (x_max - phen_slice[0])
+            ub_above = np.tan((phen_slice[3] + half_fov) * np.pi / 180)
             mask1 = (tans[:, 0] > lb_above)
             mask3 = (tans[:, 0] > lb_above2)
             mask2 = (tans[:, 1] > lb_lateral)
