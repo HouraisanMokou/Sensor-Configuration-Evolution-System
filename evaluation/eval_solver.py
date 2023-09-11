@@ -102,7 +102,11 @@ class TE_EvalSolver(EvalSolver):
             "total": score
         }
 
-
+'''
+================================================
+evaluation with pixel-level entropy and coverage
+================================================
+'''
 class PixEN_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
@@ -122,7 +126,11 @@ class PixEN_EvalSolver(EvalSolver):
             "coverage": coverage_score
         }
 
-
+'''
+================================================
+evaluation with coverage
+================================================
+'''
 class CameraCoverage_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
