@@ -143,15 +143,15 @@ class Camera(EvolutionarySensor):
         super().__init__()
         self.blueprint_name = "sensor.camera.rgb"
         # rotation
-        self.min_rotation_pitch = -10
-        self.max_rotation_pitch = 10
-        self.min_rotation_yaw = -15
-        self.max_rotation_yaw = 15
+        self.min_rotation_pitch = -15
+        self.max_rotation_pitch = 15
+        self.min_rotation_yaw = -30
+        self.max_rotation_yaw = 30
         # attribute
         self.image_size_x = 720
         self.image_size_y = 720
-        self.min_fov = 75
-        self.max_fov = 135
+        self.min_fov = 90
+        self.max_fov = 120
 
         self.dim = 5
         self.varTypes = [0, 0, 0, 0, 0]
