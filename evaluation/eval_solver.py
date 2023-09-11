@@ -25,7 +25,7 @@ class EvalSolver:
         self.sensors = sensors
         if self.eval_methods is not None:
             for eval_method in self.eval_methods:
-                eval_method.set_sensors = sensors
+                eval_method.set_sensors(sensors)
 
     def eval_pop(self, simu_ele):
         return dict()
