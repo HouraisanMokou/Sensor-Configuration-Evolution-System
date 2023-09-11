@@ -134,7 +134,7 @@ class CameraCoverage(EvaluationMethods):
         total_mask = None
         for sensor in self.sensors:
             phen_slice = phen[cnt:cnt + sensor.dim]
-            sensor_z_pos=sensor.parameter_decompress(phen_slice)[2]
+            sensor_z_pos=sensor.parameter_decompress(phen_slice[:2])[2]
             cnt += sensor.dim
 
             fov = phen_slice[-1]
