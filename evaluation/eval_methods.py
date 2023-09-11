@@ -139,7 +139,7 @@ class CameraCoverage(EvaluationMethods):
             fov = phen_slice[-1]
             voxel_len = self.voxel_len
             z_min = np.min(self.points[:, 2])
-            x_max = np.min(self.points[:, 0])
+            x_max = np.max(self.points[:, 0])
 
             usable = self.interest_space.copy()
             mask6 = (usable[:, 0] > phen[0] / voxel_len)
