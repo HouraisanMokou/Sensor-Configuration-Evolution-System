@@ -111,7 +111,8 @@ class GeatpySupportedOptimSolver(OptimSolver):
                 plt.legend(["max", "min", "avg", "std"])
                 plt.savefig(os.path.join(self.output_result_path, f"attr--{real_k}.png"))
                 plt.close()
-            elif ("attr_min" in k) or ("attr_mean" in k) or ("attr_std" in k) or ("fitness_maximum" in k) or ("fitness_minimum" in k) or ("fitness_mean" in k):
+            elif ("attr_min" in k) or ("attr_mean" in k) or ("attr_std" in k) or ("fitness_maximum" in k) or (
+                    "fitness_minimum" in k) or ("fitness_mean" in k):
                 continue
             elif k not in without:
                 plt.figure()
@@ -128,56 +129,60 @@ class GeatpySupportedOptimSolver(OptimSolver):
         if self.iter % 5 == 0:
             logger.info(f"print pos-fitness relation figure for first sensor at [generation {self.iter}]")
 
-            test_pos = np.array(self.state_logger["phen"])[:, self.sensors_pos_idxes]
-            fig = plt.figure()
-            ax = plt.axes(projection='3d')
-            ax.set_xlim3d(-1.1, 0.25)
-            ax.set_ylim3d(-0.4, 0.4)
-            ax.set_zlim3d(1.45, 1.55)
-            plt.gca().set_box_aspect(
-                (np.max(self.sensors[0].valid_points[:, 0]) - np.min(self.sensors[0].valid_points[:, 0]),
-                 np.max(self.sensors[0].valid_points[:, 1]) - np.min(self.sensors[0].valid_points[:, 1]),
-                 np.max(self.sensors[0].valid_points[:, 2]) - np.min(self.sensors[0].valid_points[:, 2])))
-            valid_places = self.sensors[0].valid_points
-            shape = (400, 200)
-            kth = 5
-            x = np.linspace(-1.1, 0.25, shape[0])
-            y = np.linspace(-0.4, 0.4, shape[1])
-            X2, Y2 = np.meshgrid(x, -y)
+            cnt = 0
+            for sensor_idx, sensor in enumerate(self.sensors):
+                test_pos = np.array(self.state_logger["phen"])[:, cnt:cnt + sensor.dim]
+                cnt += sensor.dim
 
-            f = np.zeros(shape)
-            z = np.zeros(shape)
+                fig = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.set_xlim3d(-1.1, 0.25)
+                ax.set_ylim3d(-0.4, 0.4)
+                ax.set_zlim3d(1.45, 1.55)
+                plt.gca().set_box_aspect(
+                    (np.max(sensor.valid_points[:, 0]) - np.min(sensor.valid_points[:, 0]),
+                     np.max(sensor.valid_points[:, 1]) - np.min(sensor.valid_points[:, 1]),
+                     np.max(sensor.valid_points[:, 2]) - np.min(sensor.valid_points[:, 2])))
+                valid_places = sensor.valid_points
+                shape = (400, 200)
+                kth = 5
+                x = np.linspace(-1.1, 0.25, shape[0])
+                y = np.linspace(-0.4, 0.4, shape[1])
+                X2, Y2 = np.meshgrid(x, -y)
 
-            for i in range(shape[0]):
-                for j in range(shape[1]):
-                    dis = np.linalg.norm(test_pos[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
-                    idxes = np.argpartition(dis, kth=kth)[:kth].astype('int')
-                    tmp_f = np.mean(np.array(self.state_logger["total"])[idxes])
-                    f[i, j] = tmp_f
+                f = np.zeros(shape)
+                z = np.zeros(shape)
 
-                    dis2 = np.linalg.norm(valid_places[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
-                    idxes2 = np.argpartition(dis2, kth=kth)[:kth].astype('int')
-                    z[i, j] = np.mean(valid_places[idxes2, 2])
+                for i in range(shape[0]):
+                    for j in range(shape[1]):
+                        dis = np.linalg.norm(test_pos[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
+                        idxes = np.argpartition(dis, kth=kth)[:kth].astype('int')
+                        tmp_f = np.mean(np.array(self.state_logger["total"])[idxes])
+                        f[i, j] = tmp_f
 
-            f = f.T
-            z = z.T
+                        dis2 = np.linalg.norm(valid_places[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
+                        idxes2 = np.argpartition(dis2, kth=kth)[:kth].astype('int')
+                        z[i, j] = np.mean(valid_places[idxes2, 2])
 
-            f = (f - np.min(f)) / (np.max(f) - np.min(f))
-            f = cm.jet(f)
-            p = ax.plot_surface(X2, Y2, z, facecolors=f)
-            m = cm.ScalarMappable(cmap=cm.jet)
-            m.set_array(f)
-            cax = fig.add_axes(
-                [ax.get_position().x1 + 0.01,
-                 ax.get_position().y0 + (ax.get_position().y1 - ax.get_position().y0) * 0.2, 0.02,
-                 (ax.get_position().y1 - ax.get_position().y0) * 0.6])
+                f = f.T
+                z = z.T
 
-            plt.colorbar(m, cax=cax)
-            ax.grid(False)
-            ax.axis('off')
-            ax.view_init(30, -30)
-            plt.savefig(os.path.join(self.output_result_path, "pos-fitness relation"))
-            plt.close()
+                f = (f - np.min(f)) / (np.max(f) - np.min(f))
+                f = cm.jet(f)
+                p = ax.plot_surface(X2, Y2, z, facecolors=f)
+                m = cm.ScalarMappable(cmap=cm.jet)
+                m.set_array(f)
+                cax = fig.add_axes(
+                    [ax.get_position().x1 + 0.01,
+                     ax.get_position().y0 + (ax.get_position().y1 - ax.get_position().y0) * 0.2, 0.02,
+                     (ax.get_position().y1 - ax.get_position().y0) * 0.6])
+
+                plt.colorbar(m, cax=cax)
+                ax.grid(False)
+                ax.axis('off')
+                ax.view_init(30, -30)
+                plt.savefig(os.path.join(self.output_result_path, f"pos-fitness relation [{sensor_idx}]"))
+                plt.close()
         logger.info(f"visual results of generation {self.iter} is output")
 
     def __add_logger_elements(self, key, elements):
