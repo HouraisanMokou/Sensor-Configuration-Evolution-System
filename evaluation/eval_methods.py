@@ -165,7 +165,9 @@ class CameraCoverage(EvaluationMethods):
             for m in [mask2, mask3, mask4, mask5, mask6]:
                 mask = np.logical_and(mask, m)
             total_mask = mask.astype('float') if total_mask is None else total_mask + (mask.astype('float'))
-        # total_mask = total_mask[total_mask!=0]
+        total_mask = total_mask[total_mask != 0]
         # score = np.sum((2-0.5**(total_mask-1))/(2-0.5**(len(self.sensors)-1)))
-        score = np.sum(np.log2(1 + total_mask))
+        # score = np.sum(np.log2(1 + total_mask))
+        q = 1 / 3  # q<1
+        score = np.sum((1-q**total_mask)/(1-q))
         return score / 917825.6544354344  # 931260.7241582343 is prior std
