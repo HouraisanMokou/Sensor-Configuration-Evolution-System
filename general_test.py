@@ -29,7 +29,7 @@ workspace = './workspace'
 test_file = './CSCI'
 filename = f'general_'
 
-shape = (10,20)
+shape = (10, 20)
 with open('./config/points.txt', 'r') as f:
     points3 = np.array(eval(f.read()))
 
@@ -46,7 +46,7 @@ for i in range(shape[0]):
         dis = np.linalg.norm(points3[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
         idxes = np.argpartition(dis, kth=kth)[:kth]
         tmp_z = np.mean(points3[idxes, 2])
-        z[i, j] = 1.7 #tmp_z + 0.3
+        z[i, j] = 1.7  # tmp_z + 0.3
         lines.append(tuple([x[i], y[j], z[i, j], 0, 0, 0]))
 z = z.T
 
@@ -172,7 +172,7 @@ fov = 120
 # interest_space_above = np.dstack(np.meshgrid(np.arange(-1000, 1000), np.arange(-200, 200))).reshape(-1, 2) * 0.1
 # interest_space_lateral = np.dstack(np.meshgrid(np.arange(-1000, 1000), np.arange(0, 40))).reshape(-1, 2) * 0.1
 t1 = time.time()
-interest_space = np.array(list(itertools.product(np.arange(-500, 500),np.arange(-200, 200),np.arange(0,40))))
+interest_space = np.array(list(itertools.product(np.arange(-500, 500), np.arange(-200, 200), np.arange(0, 40))))
 print(time.time() - t1)
 
 
@@ -197,19 +197,55 @@ def cal_fitness(phen, path, id=0):
             os.listdir(os.path.join(path, f)) for i in
             os.listdir(os.path.join(path, f, s))]
     print(urls)
-    if "png" in urls[0]:
-        cs = []
-        for idx, url in enumerate(urls):
-            if idx % 3 != 0:
-                continue
-            data = np.asarray(Image.open(url).convert('L'))
-            bins = np.bincount(data.flatten())
-            bins = bins[bins != 0]
-            p = bins / np.sum(bins)
-            h = -np.sum(p * np.log2(p))
-            cs.append(h)
-        c = np.mean(cs)
-
+    # if "png" in urls[0]:
+    #     cs = []
+    #     for idx, url in enumerate(urls):
+    #         data = np.asarray(Image.open(url).convert('L'))
+    #         bins = np.bincount(data.flatten())
+    #         bins = bins[bins != 0]
+    #         p = bins / np.sum(bins)
+    #         h = -np.sum(p * np.log2(p))
+    #         cs.append(h)
+    #     c = np.mean(cs)
+    size = 720
+    c = 0
+    cnt = 0
+    data = None
+    for url in urls:
+        if data is None:
+            data = np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]
+        else:
+            data = np.concatenate(
+                [data, np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]],
+                axis=2)
+        cnt += 1
+    data = data.astype("float")
+    difference = np.abs(np.diff(data, axis=2))
+    difference[difference == 0] = 1e-8
+    ss = 1 / (difference ** 2)
+    s = np.sum(ss, axis=2)
+    sigma_pix = np.sqrt(1 / s)
+    sigma_pix = cv2.resize(sigma_pix,(32,32))
+    h = np.log(sigma_pix)
+    # h = cv2.GaussianBlur(h, (3, 3), 50)
+    h = (h - np.min(h)) / (np.max(h) - np.min(h))
+    # h = cv2.resize(h, (32, 32))
+    # h[h<0.3]=0
+    h = cv2.copyMakeBorder(h,1,1,1,1,cv2.BORDER_CONSTANT,value=0)
+    sums =[]
+    for i in range(1,h.shape[0]-1):
+        for j in range(1,h.shape[1]-1):
+            around=[h[i-1,j-1],h[i-1,j],h[i-1,j+1],h[i,j-1],h[i+1,j+1],h[i+1,j-1],h[i+1,j],h[i+1,j+1]]
+            if h[i,j] > np.mean(around)+3*np.std(around):
+                sums.append((i,j))
+    for i,j in sums:
+        h[i,j]=0
+    c = np.mean(h)
+    # print(np.min(h), np.max(h), np.mean(h), np.std(h))
+    plt.imshow(h, cmap="gray")
+    plt.show()
+    c = c / cnt
+    print(c)
     return c, (None, None)
 
 
@@ -253,63 +289,68 @@ def single_test():
     # plt.imshow(hs[idx2])
     # plt.show()
 
+print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\100"))
+print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\0"))
+print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\190"))
+print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\195"))
+print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\199"))
 
-single_test()
-
-fitness_dict = {}
-fitness = np.array(fitness)
-
-m = np.mean(fitness)
-n = np.std(fitness)
-print(m, n)
-# ub = np.mean(fitness) + 3 * np.std(fitness)
-# lb = np.mean(fitness) - 3 * np.std(fitness)
-# fitness[fitness > ub] = m
-# fitness[fitness < lb] = m
-# fitness = -fitness  # 要反转一下，强度图越大越好
-# fitness = 1/fitness#-np.sqrt(np.array(fitness))
-fitness = (fitness - np.min(fitness)) / (np.max(fitness) - np.min(fitness))
-
-for i, l in enumerate(lines):
-    fitness_dict[tuple(l)] = fitness[i]
-
-test = np.array([[x[i], y[j], z.T[i, j], fitness[i * shape[1] + j]] for i in range(shape[0]) for j in range(shape[1])])
-
-fig = plt.figure()
-ax = plt.axes(projection='3d')
-ax.set_xlim3d(-1.1, 0.25)
-ax.set_ylim3d(-0.4, 0.4)
-ax.set_zlim3d(1.45, 1.55)
-plt.gca().set_box_aspect((1.35, 0.8, 0.1))
-
-mm=-float('inf')
-mm_p=None
-f = np.zeros(shape)
-for i in range(shape[0]):
-    for j in range(shape[1]):
-        f[i,j] = fitness_dict[tuple([x[i], y[j], z.T[i, j], 0,0,0])]
-        if f[i,j] > mm:
-               mm =f[i,j]
-               mm_p=(i,j)
-print(mm,mm_p)
-f=f.T
-
-from matplotlib import cm
-
-f = (f - np.min(f)) / (np.max(f) - np.min(f))
-f = cm.jet(f)
-p = ax.plot_surface(X, Y, z, facecolors=f)
-m = cm.ScalarMappable(cmap=cm.jet)
-m.set_array(f)
-cax = fig.add_axes(
-    [ax.get_position().x1 + 0.01, ax.get_position().y0 + (ax.get_position().y1 - ax.get_position().y0) * 0.2, 0.02,
-     (ax.get_position().y1 - ax.get_position().y0) * 0.6])
-
-plt.colorbar(m, cax=cax)
-# ax.grid(False)
-# ax.axis('off')
-ax.view_init(30, -30)
-plt.show()
+# single_test()
+#
+# fitness_dict = {}
+# fitness = np.array(fitness)
+#
+# m = np.mean(fitness)
+# n = np.std(fitness)
+# print(m, n)
+# # ub = np.mean(fitness) + 3 * np.std(fitness)
+# # lb = np.mean(fitness) - 3 * np.std(fitness)
+# # fitness[fitness > ub] = m
+# # fitness[fitness < lb] = m
+# # fitness = -fitness  # 要反转一下，强度图越大越好
+# # fitness = 1/fitness#-np.sqrt(np.array(fitness))
+# fitness = (fitness - np.min(fitness)) / (np.max(fitness) - np.min(fitness))
+#
+# for i, l in enumerate(lines):
+#     fitness_dict[tuple(l)] = fitness[i]
+#
+# test = np.array([[x[i], y[j], z.T[i, j], fitness[i * shape[1] + j]] for i in range(shape[0]) for j in range(shape[1])])
+#
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.set_xlim3d(-1.1, 0.25)
+# ax.set_ylim3d(-0.4, 0.4)
+# ax.set_zlim3d(1.45, 1.55)
+# plt.gca().set_box_aspect((1.35, 0.8, 0.1))
+#
+# mm = -float('inf')
+# mm_p = None
+# f = np.zeros(shape)
+# for i in range(shape[0]):
+#     for j in range(shape[1]):
+#         f[i, j] = fitness_dict[tuple([x[i], y[j], z.T[i, j], 0, 0, 0])]
+#         if f[i, j] > mm:
+#             mm = f[i, j]
+#             mm_p = (i, j)
+# print(mm, mm_p)
+# f = f.T
+#
+# from matplotlib import cm
+#
+# f = (f - np.min(f)) / (np.max(f) - np.min(f))
+# f = cm.jet(f)
+# p = ax.plot_surface(X, Y, z, facecolors=f)
+# m = cm.ScalarMappable(cmap=cm.jet)
+# m.set_array(f)
+# cax = fig.add_axes(
+#     [ax.get_position().x1 + 0.01, ax.get_position().y0 + (ax.get_position().y1 - ax.get_position().y0) * 0.2, 0.02,
+#      (ax.get_position().y1 - ax.get_position().y0) * 0.6])
+#
+# plt.colorbar(m, cax=cax)
+# # ax.grid(False)
+# # ax.axis('off')
+# ax.view_init(30, -30)
+# plt.show()
 
 # shape = (400, 200)
 # kth = 5

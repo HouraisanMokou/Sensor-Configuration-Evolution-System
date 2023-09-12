@@ -5,6 +5,7 @@ import itertools
 from collections import Counter
 
 import numpy as np
+import cv2
 from PIL import Image
 from loguru import logger
 
@@ -71,7 +72,18 @@ class TemporalEntropy(EvaluationMethods):
                     s = np.sum(ss, axis=2)
                     sigma_pix = np.sqrt(1 / s)
                     h = np.log(sigma_pix)
-                    c += np.mean(h)
+                    h = (h - np.min(h)) / (np.max(h) - np.min(h))
+                    h = cv2.copyMakeBorder(h, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=0)
+                    sums = []
+                    for i in range(1, h.shape[0] - 1):
+                        for j in range(1, h.shape[1] - 1):
+                            around = [h[i - 1, j - 1], h[i - 1, j], h[i - 1, j + 1], h[i, j - 1], h[i + 1, j + 1],
+                                      h[i + 1, j - 1], h[i + 1, j], h[i + 1, j + 1]]
+                            if h[i, j] > np.mean(around) + 3 * np.std(around):
+                                sums.append((i, j))
+                    for i, j in sums:
+                        h[i, j] = 0
+                    c += np.sum(h)
         return c / cnt
 
 

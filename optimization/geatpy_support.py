@@ -30,6 +30,9 @@ class SensorConfigurationProblem(ea.Problem):
         self.Fields = None
         self.kth = 6
 
+    def set_kth(self, kth):
+        self.kth = 6
+
     def set_Fields(self, Fields):
         self.Fields = Fields
 
@@ -41,7 +44,7 @@ class SensorConfigurationProblem(ea.Problem):
                 np.hstack([self.fitness_buffer, np.array([f])])
             self.pop_buffer = pop if self.pop_buffer is None else \
                 np.vstack([self.pop_buffer, pop])
-        if len(self.fitness_buffer) > 500:
+        if len(self.fitness_buffer) > 200:# 500:
             mu = np.mean(self.fitness_buffer)
             sigma = np.std(self.fitness_buffer)
             lb = mu - 3 * sigma
@@ -100,8 +103,8 @@ class DE_currentToBest_1_L_online(soea_DE_currentToBest_1_L_templet):
             F = F if F is not None else 0.3
             CR = CR if CR is not None else 0.6
             self.mutOper = ea.Mutde(F=F)  # 生成差分变异算子对象
-            self.muOpter2 = ea.Mutde(F=F /2)
-            self.muOpter3 = ea.Mutde(F=F /3) # F delay
+            self.muOpter2 = ea.Mutde(F=F / 2)
+            self.muOpter3 = ea.Mutde(F=F / 3)  # F delay
             self.recOper = ea.Xovexp(XOVR=CR, Half_N=True)  # 生成指数交叉算子对象，这里的XOVR即为DE中的Cr
         else:
             raise RuntimeError('编码方式必须为''RI''.')
@@ -117,7 +120,7 @@ class DE_currentToBest_1_L_online(soea_DE_currentToBest_1_L_templet):
         return self.population
 
     def run_online(self):
-        population = self.population if self.experiment_pop is None else self.population+self.experiment_pop
+        population = self.population if self.experiment_pop is None else self.population + self.experiment_pop
         NIND = self.NIND
         self.call_aimFunc(population)  # 计算种群的目标函数值
         population.FitnV = ea.scaling(population.ObjV, population.CV, self.problem.maxormins)  # 计算适应度
@@ -144,6 +147,6 @@ class DE_currentToBest_1_L_online(soea_DE_currentToBest_1_L_templet):
         experimentPop.Chrom = mutOper.do(population.Encoding, population.Chrom, population.Field,
                                          [r0, None, None, r_best, r0])  # 变异
         experimentPop.Chrom = self.recOper.do(np.vstack([population.Chrom, experimentPop.Chrom]))  # 重组
-        self.experiment_pop=experimentPop
+        self.experiment_pop = experimentPop
 
         return experimentPop
