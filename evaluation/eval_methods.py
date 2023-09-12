@@ -15,6 +15,9 @@ class EvaluationMethods:
     basic class
     """
 
+    def __init__(self):
+        self.result_name = None
+
     def run(self, simu_ele):
         """
         :param simu_ele: {"phen":ndarry,"urls":[[[str]]]}
@@ -33,6 +36,10 @@ give a random value
 
 
 class RandomEvaluation(EvaluationMethods):
+    def __init__(self):
+        super().__init__()
+        self.result_name = "random"
+
     def run(self, simu_ele):
         return np.random.random()
 
@@ -46,6 +53,10 @@ entropy of pixels at same position but different frames
 
 class TemporalEntropy(EvaluationMethods):
     """only for camera"""
+
+    def __init__(self):
+        super().__init__()
+        self.result_name = "TE"
 
     def run(self, simu_ele):
         urls = simu_ele["urls"]
@@ -97,6 +108,10 @@ entropy of pixels at different position and in same frames
 class PixEntropy(EvaluationMethods):
     """only for camera"""
 
+    def __init__(self):
+        super().__init__()
+        self.result_name = "PixEN"
+
     def run(self, simu_ele):
         urls = simu_ele["urls"]
 
@@ -121,6 +136,8 @@ class PixEntropy(EvaluationMethods):
 
 class CameraCoverage(EvaluationMethods):
     def __init__(self):
+        super().__init__()
+        self.result_name = "coverage"
         self.sensors = None
         self.point_file = "./config/points.txt"
         with open(self.point_file, "r") as f:
@@ -181,5 +198,5 @@ class CameraCoverage(EvaluationMethods):
         # score = np.sum((2-0.5**(total_mask-1))/(2-0.5**(len(self.sensors)-1)))
         # score = np.sum(np.log2(1 + total_mask))
         q = 1 / 3  # q<1
-        score = np.sum((1-q**total_mask)/(1-q))
+        score = np.sum((1 - q ** total_mask) / (1 - q))
         return score / 917825.6544354344  # 931260.7241582343 is prior std

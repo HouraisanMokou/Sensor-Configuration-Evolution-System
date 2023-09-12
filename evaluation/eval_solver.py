@@ -102,11 +102,14 @@ class TE_EvalSolver(EvalSolver):
             "total": score
         }
 
+
 '''
 ================================================
 evaluation with pixel-level entropy and coverage
 ================================================
 '''
+
+
 class PixEN_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
@@ -126,11 +129,14 @@ class PixEN_EvalSolver(EvalSolver):
             "coverage": coverage_score
         }
 
+
 '''
 ================================================
 evaluation with coverage
 ================================================
 '''
+
+
 class CameraCoverage_EvalSolver(EvalSolver):
 
     def __init__(self, name, system_settings, settings):
@@ -145,3 +151,39 @@ class CameraCoverage_EvalSolver(EvalSolver):
             "phen": simu_ele["phen"],
             "total": coverage_score,
         }
+
+
+'''
+================================================
+evaluation with coverage
+================================================
+'''
+
+
+class ComplexEvalSolver(EvalSolver):
+    method_dict = {
+        "camera_coverage": CameraCoverage,
+        "temporal_entropy": TemporalEntropy,
+        "pixel-level_entropy": PixEntropy,
+        "random": RandomEvaluation
+    }
+
+    def __init__(self, name, system_settings, settings):
+        super().__init__(name, system_settings, settings)
+        self.eval_methods = []
+        if len(settings["weights"]) != len(settings["method_list"]):
+            logger.error("attr of evaluation settings [weights] and [method_list] do not have same size")
+        self.weights = settings["weights"]
+        for method_name in settings["method_list"]:
+            method = ComplexEvalSolver.method_dict[method_name]()
+            self.eval_methods.append(method)
+
+    def eval_pop(self, simu_ele):
+        total = 0
+        result_dict = dict()
+        for idx, method in enumerate(self.eval_methods):
+            result = method.run(simu_ele)
+            result_dict[method.result_name] = result
+            total += result * self.weights[idx]
+        result_dict["total"] = total
+        return result_dict

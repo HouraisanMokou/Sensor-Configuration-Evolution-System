@@ -8,13 +8,13 @@ system:
   simu_broken_rerun_input_dirname: "rerun_input"
   simu_broken_rerun_output_dirname: "rerun_output"
   visual_result_dirname: "res"
-  sensor_list: ["camera","camera"]
+  sensor_list: [ "camera","camera" ]
 
 # simulation setting
 simulation:
   CSCI_path: "./CSCI"
-  carla_paths: ["E:\\WindowsNoEditor\\CarlaUE4.exe"]
-  ports: [2000]
+  carla_paths: [ "E:\\WindowsNoEditor\\CarlaUE4.exe" ]
+  ports: [ 2000 ]
   slice_count: 5
   wait_record_time: 3
   scenario_info:
@@ -28,6 +28,8 @@ simulation:
 # evaluation setting
 evaluation:
   name: "perception entropy"
+  method_list: [ "camera_coverage","temporal_entropy","pixel-level_entropy" ]
+  weights: [ 1,1,1 ]
 
 # optimization setting
 optimization:
