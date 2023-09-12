@@ -7,7 +7,7 @@ import yaml
 import random
 import numpy as np
 import open3d as o3d
-from optimization.sensor import Lidar, Camera
+from optimization.evolutionary_sensor import Lidar, Camera
 from collections import Counter
 import itertools
 

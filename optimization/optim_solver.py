@@ -7,7 +7,7 @@ import os
 from matplotlib import pyplot as plt
 from matplotlib import cm
 
-from .sensor import *
+from .evolutionary_sensor import *
 from .geatpy_support import *
 
 
@@ -45,15 +45,14 @@ class GeatpySupportedOptimSolver(OptimSolver):
         self.varTypes = []
         self.lb = []
         self.ub = []
-
-        self.sensors = []
-        self.sensors_pos_idxes = []
         self.algorithm = None
         self.problem = None
 
+    def set_sensors(self,sensors):
+        self.sensors_pos_idxes = []
         cnt = 0
-        for sensor_name in self.sensor_list:
-            sensor = DE_OptimSolver.sensor_dict[sensor_name]()
+        self.sensors = []
+        for sensor in sensors:
             self.sensors_pos_idxes += [cnt, cnt + 1]
             self.sensors.append(sensor)
             self.dim += sensor.dim
@@ -210,10 +209,6 @@ class GeatpySupportedOptimSolver(OptimSolver):
 
 
 class DE_OptimSolver(GeatpySupportedOptimSolver):
-    sensor_dict = {
-        "lidar": Lidar,
-        "camera": Camera
-    }
 
     def __init__(self, name, system_settings, settings):
         super().__init__(name, system_settings, settings)
@@ -222,6 +217,10 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         self.F = settings["parameters"]["F"]
         self.CR = settings["parameters"]["CR"]
 
+        # logger.info(
+        #     f"optimization solver constructed [name: {self.name}, sensor list: {self.sensor_list}, nand: {self.nand}, generation: {self.generation}, F: {self.F}, CR: {self.CR}]")
+
+    def setup(self):
         initial_population = ea.Population(
             Encoding='RI', NIND=self.nand
         )
@@ -232,10 +231,6 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
             self.problem, initial_population, self.F, self.CR, MAXGEN=self.generation
         )
 
-        logger.info(
-            f"optimization solver constructed [name: {self.name}, sensor list: {self.sensor_list}, nand: {self.nand}, generation: {self.generation}, F: {self.F}, CR: {self.CR}]")
-
-    def setup(self):
         self.iter = 0
         self.problem.set_kth(1)
         self.algorithm.setup()

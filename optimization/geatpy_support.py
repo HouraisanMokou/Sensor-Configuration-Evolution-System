@@ -31,7 +31,7 @@ class SensorConfigurationProblem(ea.Problem):
         self.kth = 6
 
     def set_kth(self, kth):
-        self.kth = 6
+        self.kth = kth
 
     def set_Fields(self, Fields):
         self.Fields = Fields

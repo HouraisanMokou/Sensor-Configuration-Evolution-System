@@ -186,4 +186,5 @@ class ComplexEvalSolver(EvalSolver):
             result_dict[method.result_name] = result
             total += result * self.weights[idx]
         result_dict["total"] = total
+        result_dict["phen"] = simu_ele["phen"]
         return result_dict

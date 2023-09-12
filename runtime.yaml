@@ -35,7 +35,7 @@ evaluation:
 optimization:
   name: "DE"
   parameters:
-    nand: 20
+    nand: 4
     generation: 30
     F: 0.25
     CR: 0.7

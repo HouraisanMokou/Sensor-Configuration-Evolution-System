@@ -6,6 +6,7 @@ import yaml
 from evaluation.eval_solver import *
 from optimization.optim_solver import *
 from simulation.SimuSolver import *
+from optimization.evolutionary_sensor import *
 
 
 class BaseSolver:
@@ -23,14 +24,25 @@ class BaseSolver:
 
 
 class EvolutionSolver(BaseSolver):  # geatpy support
-
+    sensor_dict = {
+        "lidar": Lidar,
+        "camera": Camera
+    }
     def __init__(self, runtime):
         super().__init__(runtime)
+        self.sensor_list = self.system_setting["sensor_list"]
+        self.sensors = []
+        for sensor_name in self.sensor_list:
+            sensor = EvolutionSolver.sensor_dict[sensor_name]()
+            self.sensors.append(sensor)
+
         self.name = self.system_setting["name"] + "_" + self.optimization_setting["name"]
         self.simu_solver = SimuSolver(self.name, self.system_setting, self.simulation_setting)
-        self.evaluation_solver = PixEN_EvalSolver(self.name, self.system_setting, self.evaluation_setting)
+        self.evaluation_solver = ComplexEvalSolver(self.name, self.system_setting, self.evaluation_setting)
         self.optimization_solver = DE_OptimSolver(self.name, self.system_setting, self.optimization_setting)
-        self.evaluation_solver.set_sensors(self.optimization_solver.sensors)
+        self.optimization_solver.set_sensors(self.sensors)
+        self.evaluation_solver.set_sensors(self.sensors)
+
 
     def run(self):
         logger.info("setup initial population")
