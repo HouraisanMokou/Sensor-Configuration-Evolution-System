@@ -208,44 +208,59 @@ def cal_fitness(phen, path, id=0):
     #         cs.append(h)
     #     c = np.mean(cs)
     size = 720
-    c = 0
-    cnt = 0
-    data = None
-    for url in urls:
-        if data is None:
-            data = np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]
-        else:
-            data = np.concatenate(
-                [data, np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]],
-                axis=2)
-        cnt += 1
-    data = data.astype("float")
-    difference = np.abs(np.diff(data, axis=2))
-    difference[difference == 0] = 1e-8
-    ss = 1 / (difference ** 2)
-    s = np.sum(ss, axis=2)
-    sigma_pix = np.sqrt(1 / s)
-    sigma_pix = cv2.resize(sigma_pix,(32,32))
-    h = np.log(sigma_pix)
-    # h = cv2.GaussianBlur(h, (3, 3), 50)
-    h = (h - np.min(h)) / (np.max(h) - np.min(h))
-    # h = cv2.resize(h, (32, 32))
-    # h[h<0.3]=0
-    h = cv2.copyMakeBorder(h,1,1,1,1,cv2.BORDER_CONSTANT,value=0)
-    sums =[]
-    for i in range(1,h.shape[0]-1):
-        for j in range(1,h.shape[1]-1):
-            around=[h[i-1,j-1],h[i-1,j],h[i-1,j+1],h[i,j-1],h[i+1,j+1],h[i+1,j-1],h[i+1,j],h[i+1,j+1]]
-            if h[i,j] > np.mean(around)+3*np.std(around):
-                sums.append((i,j))
-    for i,j in sums:
-        h[i,j]=0
-    c = np.mean(h)
-    # print(np.min(h), np.max(h), np.mean(h), np.std(h))
-    plt.imshow(h, cmap="gray")
-    plt.show()
-    c = c / cnt
-    print(c)
+    for idx, url in enumerate(urls):
+        data = np.asarray(Image.open(url).convert("L").resize((size, size))).astype('float').flatten()
+        mu_data = np.mean(data)
+        std_data = np.std(data)
+        combine = np.vstack([data,data])
+        cov = np.cov(combine)[0,1]
+        c1=1e-2
+        c2=1e-2
+        ssim = (2*mu_data*mu_data+c1)*(2*cov+c2)/((mu_data**2+mu_data**2+c1)*(std_data**2+std_data**2+c2))
+        print(ssim)
+
+    # size = 720
+    # c = 0
+    # cnt = 0
+    # data = None
+    # for idx, url in enumerate(urls):
+    #     # if idx > 5:
+    #     #     continue
+    #     if data is None:
+    #         data = np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]
+    #     else:
+    #         data = np.concatenate(
+    #             [data, np.asarray(Image.open(url).convert("L").resize((size, size)))[:, :, None]],
+    #             axis=2)
+    #     cnt += 1
+    # print(cnt)
+    # data = data.astype("float")
+    # difference = np.abs(np.diff(data, axis=2))
+    # difference[difference == 0] = 1e-8
+    # ss = 1 / (difference ** 2)
+    # s = np.sum(ss, axis=2)
+    # sigma_pix = np.sqrt(1 / s)
+    # sigma_pix = cv2.resize(sigma_pix,(32,32))
+    # h = np.log(sigma_pix)
+    # # h = cv2.GaussianBlur(h, (3, 3), 50)
+    # h = (h - np.min(h)) / (np.max(h) - np.min(h))
+    # # h = cv2.resize(h, (32, 32))
+    # # h[h<0.3]=0
+    # h = cv2.copyMakeBorder(h,1,1,1,1,cv2.BORDER_CONSTANT,value=0)
+    # sums =[]
+    # for i in range(1,h.shape[0]-1):
+    #     for j in range(1,h.shape[1]-1):
+    #         around=[h[i-1,j-1],h[i-1,j],h[i-1,j+1],h[i,j-1],h[i+1,j+1],h[i+1,j-1],h[i+1,j],h[i+1,j+1]]
+    #         if h[i,j] > np.mean(around)+3*np.std(around):
+    #             sums.append((i,j))
+    # for i,j in sums:
+    #     h[i,j]=0
+    # c = np.mean(h)
+    # # print(np.min(h), np.max(h), np.mean(h), np.std(h))
+    # plt.imshow(h, cmap="gray")
+    # plt.show()
+    # c = c / cnt
+    # print(c)
     return c, (None, None)
 
 
@@ -289,11 +304,12 @@ def single_test():
     # plt.imshow(hs[idx2])
     # plt.show()
 
-print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\100"))
-print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\0"))
-print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\190"))
-print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\195"))
-print(cal_fitness(None,"D:\projects\sensor_configuration\workspace\general_\output\\199"))
+
+print(cal_fitness(None, "D:\projects\sensor_configuration\workspace\general_\output\\100"))
+print(cal_fitness(None, "D:\projects\sensor_configuration\workspace\general_\output\\0"))
+print(cal_fitness(None, "D:\projects\sensor_configuration\workspace\general_\output\\190"))
+print(cal_fitness(None, "D:\projects\sensor_configuration\workspace\general_\output\\195"))
+print(cal_fitness(None, "D:\projects\sensor_configuration\workspace\general_\output\\199"))
 
 # single_test()
 #

@@ -232,7 +232,7 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         )
 
         self.iter = 0
-        self.problem.set_kth(1)
+        # self.problem.set_kth(1)
         self.algorithm.setup()
         self.problem.set_Fields(self.algorithm.population.Field)
         self.algorithm.population.Phen = self.algorithm.population.decoding()
@@ -242,10 +242,10 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
 
     def run(self, eval_result):
         self.iter += 1
-        if self.iter == 5:
-            self.problem.set_kth(3)
-        elif self.iter == 10:
-            self.problem.set_kth(6)
+        # if self.iter == 5:
+        #     self.problem.set_kth(3)
+        # elif self.iter == 10:
+        #     self.problem.set_kth(6)
         report_for_update = eval_result["report_for_update"]
         pops = report_for_update[0]
         fitness = report_for_update[1]
