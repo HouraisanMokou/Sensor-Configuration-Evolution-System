@@ -28,7 +28,7 @@ class EvaluationMethods:
         self.sensors = sensors
 
     def log_after_eval(self):
-        logger.info(f'Method: [{self.result_name}] is finish for this generation')
+        logger.info(f'Method: [{self.result_name}] is finish for this population')
 
 
 """

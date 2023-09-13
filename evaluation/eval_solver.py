@@ -36,7 +36,8 @@ class EvalSolver:
     def run(self, simu_report):
         detail_report = dict()
         report_for_update = [[], []]  # [[phen],[fitness]]
-        for simu_ele in simu_report["pop"]:
+        for idx, simu_ele in enumerate(simu_report["pop"]):
+            logger.info(f"start to evaluate the new generated population [{idx}/{len(simu_ele['pop'])}]")
             res = self.eval_pop(simu_ele)
             for k in res.keys():
                 if k in detail_report.keys():
@@ -180,7 +181,6 @@ class ComplexEvalSolver(EvalSolver):
             self.eval_methods.append(method)
 
     def eval_pop(self, simu_ele):
-        logger.info("start to evaluate the new generated population")
         total = 0
         result_dict = dict()
         for idx, method in enumerate(self.eval_methods):
