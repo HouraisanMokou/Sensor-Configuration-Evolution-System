@@ -94,7 +94,7 @@ class TemporalEntropy(EvaluationMethods):
                                 sums.append((i, j))
                     for i, j in sums:
                         h[i, j] = 0
-                    c += np.sum(h)
+                    c += np.mean(h)
         return c / cnt
 
 
