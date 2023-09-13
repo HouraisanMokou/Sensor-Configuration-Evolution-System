@@ -246,5 +246,5 @@ class SSIM(EvaluationMethods):
                     scenario_res.append(mean_ssim)
             scenario_res = np.mean(scenario_res)
             score.append(scenario_res)
-        score = np.mean(score)
+        score = - np.mean(score) # ssim is higher, the configuration is more similar
         return score
