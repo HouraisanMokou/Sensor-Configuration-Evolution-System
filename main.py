@@ -31,10 +31,16 @@ class EvolutionSolver(BaseSolver):  # geatpy support
     def __init__(self, runtime):
         super().__init__(runtime)
         self.sensor_list = self.system_setting["sensor_list"]
+        self.sensor_setting = runtime["sensors"]
         self.sensors = []
         for sensor_name in self.sensor_list:
             sensor = EvolutionSolver.sensor_dict[sensor_name]()
             self.sensors.append(sensor)
+            for sensor_setting_tag in self.sensor_setting.keys():
+                if sensor_name == sensor_setting_tag:
+                    for k in self.sensor_setting[sensor_setting_tag]:
+                        sensor.set_attribute_unsafe(k,self.sensor_setting[sensor_setting_tag][k])
+                    break
 
         self.name = self.system_setting["name"] + "_" + self.optimization_setting["name"]
         self.simu_solver = SimuSolver(self.name, self.system_setting, self.simulation_setting)

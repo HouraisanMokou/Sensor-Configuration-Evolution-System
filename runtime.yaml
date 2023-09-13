@@ -39,3 +39,9 @@ optimization:
     generation: 30
     F: 0.25
     CR: 0.7
+
+# sensor setting
+sensors:
+  camera:
+    image_size_x: 720
+    image_size_y: 720

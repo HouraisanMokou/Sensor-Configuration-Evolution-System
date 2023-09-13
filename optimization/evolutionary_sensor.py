@@ -18,6 +18,9 @@ class Sensor:
         with open(self.points_path, "r") as f:
             self.valid_points = np.array(eval(f.read()))
 
+    def set_attribute_unsafe(self, k, v):
+        setattr(self, k, v)
+
 
 '''
 ===========================
