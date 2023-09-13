@@ -48,6 +48,7 @@ class EvolutionSolver(BaseSolver):  # geatpy support
         self.optimization_solver = DE_OptimSolver(self.name, self.system_setting, self.optimization_setting)
         self.optimization_solver.set_sensors(self.sensors)
         self.evaluation_solver.set_sensors(self.sensors)
+        logger.info("The system settings is loaded")
 
 
     def run(self):
@@ -57,9 +58,11 @@ class EvolutionSolver(BaseSolver):  # geatpy support
         eval_result = self.evaluation_solver.setup(simu_report)
 
         for i in range(0, self.optimization_setting["parameters"]["generation"]):
+            logger.info("Start of new generation")
             population_meta = self.optimization_solver.run(eval_result)
             simu_report = self.simu_solver.run(population_meta)
             eval_result = self.evaluation_solver.run(simu_report)
+            logger.info("End of this new generation")
 
         self.simu_solver.close()
 

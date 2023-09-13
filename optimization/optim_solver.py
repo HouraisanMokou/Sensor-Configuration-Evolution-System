@@ -48,7 +48,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
         self.algorithm = None
         self.problem = None
 
-    def set_sensors(self,sensors):
+    def set_sensors(self, sensors):
         self.sensors_pos_idxes = []
         cnt = 0
         self.sensors = []
@@ -85,6 +85,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
         self.log()
 
     def log(self):
+        logger.info(f"start to log for [{self.iter}]")
         plt.figure()
         plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_maximum"])
         plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_minimum"])
@@ -126,10 +127,10 @@ class GeatpySupportedOptimSolver(OptimSolver):
         with open(os.path.join(self.output_result_path, "state_logger.txt"), "w") as f:
             f.write(str(self.state_logger))
         if self.iter % 5 == 0:
-            logger.info(f"print pos-fitness relation figure for first sensor at [generation {self.iter}]")
 
             cnt = 0
             for sensor_idx, sensor in enumerate(self.sensors):
+                logger.info(f"print pos-fitness relation figure for [{sensor_idx}] sensor at [generation {self.iter}]")
                 test_pos = np.array(self.state_logger["phen"])[:, cnt:cnt + sensor.dim]
                 cnt += sensor.dim
 

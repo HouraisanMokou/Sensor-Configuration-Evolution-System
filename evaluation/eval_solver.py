@@ -180,12 +180,14 @@ class ComplexEvalSolver(EvalSolver):
             self.eval_methods.append(method)
 
     def eval_pop(self, simu_ele):
+        logger.info("start to evaluate the new generated population")
         total = 0
         result_dict = dict()
         for idx, method in enumerate(self.eval_methods):
             result = method.run(simu_ele)
             result_dict[method.result_name] = result
             total += result * self.weights[idx]
+            method.log_after_eval()
         result_dict["total"] = total
         result_dict["phen"] = simu_ele["phen"]
         return result_dict

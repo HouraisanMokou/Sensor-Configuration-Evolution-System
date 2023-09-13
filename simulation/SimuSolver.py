@@ -167,8 +167,10 @@ class SimuSolver:
                 for idx, sensor in enumerate(sensor_dir):
                     sensor_path = os.path.join(path, pop_dir, scenario, sensor)
                     result_name = os.listdir(sensor_path)
-                    slice_url_vector = [os.path.join(os.path.join(self.output_result_path,str(self.iter)), pop_dir, scenario, sensor, s) for s in
-                                        result_name]
+                    slice_url_vector = [
+                        os.path.join(os.path.join(self.output_result_path, str(self.iter)), pop_dir, scenario, sensor,
+                                     s) for s in
+                        result_name]
                     if len(result_name) != self.count:
                         logger.error(f"population [{pop_dir}] is broken")
                         broken_list.append(pop_dir)
@@ -188,30 +190,31 @@ class SimuSolver:
         }
 
     def run(self, population_meta):
-        self.iter+=1
-        if not os.path.exists(os.path.join(self.output_result_path,str(self.iter))):
-            os.makedirs(os.path.join(self.output_result_path,str(self.iter)))
-        for task in self.simu_tasks:
+        logger.info("simulation module start to run")
+        self.iter += 1
+        if not os.path.exists(os.path.join(self.output_result_path, str(self.iter))):
+            os.makedirs(os.path.join(self.output_result_path, str(self.iter)))
+        for task in self.simu_tasks:  # simulate
             task.set_iter(self.iter)
             task.run()
-        res = self.check(os.path.join(self.output_result_path,str(self.iter)), population_meta[1])  # population_meta[1]: sensor_suffixes
+        res = self.check(os.path.join(self.output_result_path, str(self.iter)),
+                         population_meta[1])  # population_meta[1]: sensor_suffixes
         if len(res["broken_list"]) != 0:
             tmp_res = self.rerun(res["broken_list"], population_meta[1])
             res["pop"] += tmp_res["pop"]
-        logger.info("simulation module start to run")
         return res
 
     def setup(self, population_meta):
-        if not os.path.exists(os.path.join(self.output_result_path,str(self.iter))):
-            os.makedirs(os.path.join(self.output_result_path,str(self.iter)))
-        for task in self.simu_tasks:
+        logger.info("simulation module start to set up")
+        if not os.path.exists(os.path.join(self.output_result_path, str(self.iter))):
+            os.makedirs(os.path.join(self.output_result_path, str(self.iter)))
+        for task in self.simu_tasks:  # simulate
             task.set_iter(0)
             task.setup()
-        res = self.check(os.path.join(self.output_result_path,str(0)), population_meta[1])
+        res = self.check(os.path.join(self.output_result_path, str(0)), population_meta[1])
         if len(res["broken_list"]) != 0:
             tmp_res = self.rerun(res["broken_list"], population_meta[1])
             res["pop"] += tmp_res["pop"]
-        logger.info("simulation module start to set up")
         return res
 
     def rerun(self, broken_list, sensor_suffixes, iter=0):
