@@ -66,7 +66,7 @@ class MonteCarloSample:
         if self.simu:
             self.system_call(self.start_CSCI_cmd, self.start_carla_cmd)
         simu_report = self.collect_simu_info(sampled)
-        eval_results = np.array(self.eval(simu_report))[:,None]
+        eval_results = np.array(self.eval(simu_report))
         combined = np.hstack([sampled,eval_results])
         dataframe=pd.DataFrame(data=combined)
         dataframe.to_csv(self.report_path,header=None,index=False)
@@ -75,10 +75,12 @@ class MonteCarloSample:
         totals = []
         for simu_ele in simu_report["pop"]:
             total = 0
+            scores=[]
             for idx, method in enumerate(self.methods):
                 score = method.run(simu_ele)
                 total += score * self.weights[idx]
-            totals.append(total)
+                scores.append(score)
+            totals.append(scores+[total])
         return totals
 
     def random_sample(self, batch=200):
