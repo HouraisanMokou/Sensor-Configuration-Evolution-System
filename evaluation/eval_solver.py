@@ -165,7 +165,8 @@ class ComplexEvalSolver(EvalSolver):
         "camera_coverage": CameraCoverage,
         "temporal_entropy": TemporalEntropy,
         "pixel-level_entropy": PixEntropy,
-        "random": RandomEvaluation
+        "random": RandomEvaluation,
+        "ssim": SSIM
     }
 
     def __init__(self, name, system_settings, settings):
