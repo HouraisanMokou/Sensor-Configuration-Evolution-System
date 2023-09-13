@@ -200,3 +200,51 @@ class CameraCoverage(EvaluationMethods):
         q = 1 / 3  # q<1
         score = np.sum((1 - q ** total_mask) / (1 - q))
         return score / 917825.6544354344  # 931260.7241582343 is prior std
+
+
+class SSIM(EvaluationMethods):
+
+    def __init__(self):
+        super().__init__()
+        self.result_name = "SSIM"
+
+    def run(self, simu_ele):
+        urls = simu_ele["urls"]
+        meta = []
+        c1 = 1e-4
+        c2 = 1e-4
+        score=[]
+        for scenario in urls:
+            scenario_meta = []
+            for sensor in scenario:
+                if "png" in sensor[0]:
+                    sensor_meta = []
+                    for url in sensor:
+                        data = np.asarray(Image.open(url).convert("L")).astype('float').flatten()
+                        mu_data = np.mean(data)
+                        std_data = np.std(data)
+                        sensor_meta.append((data, mu_data, std_data))
+                    scenario_meta.append(sensor_meta)
+            scenario_res=[]
+            for idx1, sensor_meta1 in enumerate(scenario_meta):
+                for idx2, sensor_meta2 in enumerate(scenario_meta):
+                    if idx2 <= idx1:
+                        continue
+                    ssim_list = []
+                    for slice_idx in range(len(sensor_meta1)):
+                        meta1 = sensor_meta1[slice_idx]
+                        meta2 = sensor_meta2[slice_idx]
+                        cov = np.cov(meta1[0], meta2[0])[0, 1]
+                        mu_x = meta1[1]
+                        mu_y = meta2[1]
+                        std_x = meta1[2]
+                        std_y = meta2[2]
+                        ssim = (2 * mu_x * mu_y + c1) * (2 * cov + c2) / (
+                                    (mu_x ** 2 + mu_y ** 2 + c1) * (std_x ** 2 + std_y ** 2 + c2))
+                        ssim_list.append(ssim)
+                    mean_ssim = np.mean(ssim_list)
+                    scenario_res.append(mean_ssim)
+            scenario_res = np.mean(scenario_res)
+            score.append(scenario_res)
+        score = np.mean(score)
+        return score
