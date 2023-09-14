@@ -254,6 +254,8 @@ class SSIM(EvaluationMethods):
         score = []
         for scenario in urls:
             scenario_meta = []
+            if len(scenario) == 1:
+                return 0
             for sensor in scenario:
                 if "png" in sensor[0]:
                     sensor_meta = []
