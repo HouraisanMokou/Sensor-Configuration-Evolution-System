@@ -28,7 +28,11 @@ class SensorConfigurationProblem(ea.Problem):
         self.pop_buffer = None
         self.fitness_buffer = None
         self.Fields = None
+        self.sensors = None
         self.kth = 6
+
+    def set_sensors(self, sensors):
+        self.sensors = sensors
 
     def set_kth(self, kth):
         self.kth = kth
@@ -39,12 +43,13 @@ class SensorConfigurationProblem(ea.Problem):
     def update_buffer(self, pops, fitness):
         for pop, f in zip(pops, fitness):
             pop = np.array(pop).astype('float')
+            pop = self.sort_pop(pop)
             pop = (pop - self.Fields[1, :]) / (self.Fields[0, :] - self.Fields[1, :])
             self.fitness_buffer = np.array([f]) if self.fitness_buffer is None else \
                 np.hstack([self.fitness_buffer, np.array([f])])
             self.pop_buffer = pop if self.pop_buffer is None else \
                 np.vstack([self.pop_buffer, pop])
-        if len(self.fitness_buffer) > 200:# 500:
+        if len(self.fitness_buffer) > 200:  # 500:
             mu = np.mean(self.fitness_buffer)
             sigma = np.std(self.fitness_buffer)
             lb = mu - 3 * sigma
@@ -57,11 +62,25 @@ class SensorConfigurationProblem(ea.Problem):
         exp = np.exp(-1 / (2 * (sigma ** 2)) * (x ** 2))
         return exp
 
+    def sort_pop(self, phen):
+        slices = []
+        cnt = 0
+        for sensor_idx, sensor in self.sensors:
+            phen_slice = phen[cnt:cnt + sensor.dim]
+            cnt += sensor.dim
+            slices.append(sensor.blueprint_name + list(phen_slice))
+        sorted_slices = sorted(slices, key=lambda x: (x[0], x[1], x[2]))
+        sorted_phen = []
+        for ss in sorted_slices:
+            sorted_phen += ss[1:]
+        return np.array(sorted_phen)
+
     def evalVars(self, Vars):
         kth = self.kth
         fs = []
         for pop in Vars:
             pop = np.array(pop).squeeze()
+            pop = self.sort_pop(pop)
             norm_pop = (pop - self.Fields[1, :]) / (self.Fields[0, :] - self.Fields[1, :])
             dis = np.linalg.norm(self.pop_buffer - norm_pop, 2, axis=1)
             idxes = np.argpartition(dis, kth=kth)[:kth]

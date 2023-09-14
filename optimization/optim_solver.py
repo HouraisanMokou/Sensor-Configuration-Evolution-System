@@ -60,6 +60,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
             self.lb += sensor.lb
             self.ub += sensor.ub
             cnt += sensor.dim
+        self.problem.set_sensors(self.sensors)
 
     def update_logger(self, detail_report):
         self.__append_logger_elements("gen", self.iter)
