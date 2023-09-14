@@ -32,10 +32,10 @@ class EvolutionSolver(BaseSolver):  # geatpy support
     def __init__(self, runtime):
         super().__init__(runtime)
         self.name = self.name + "_[" + "_".join(runtime["evaluation"]["method_list"]) + "]_" + \
-                    runtime["optimization"]["parameters"]["nand"] + "_" + \
-                    runtime["optimization"]["parameters"]["generation"] + "_" + \
-                    runtime["optimization"]["parameters"]["F"] + "_" + \
-                    runtime["optimization"]["parameters"]["CR"] + f"_{time.time()}"
+                    str(runtime["optimization"]["parameters"]["nand"]) + "_" + \
+                    str(runtime["optimization"]["parameters"]["generation"]) + "_" + \
+                    str(runtime["optimization"]["parameters"]["F"]) + "_" + \
+                    str(runtime["optimization"]["parameters"]["CR"]) + f"_{time.time()}"
         self.sensor_list = self.system_setting["sensor_list"]
         self.sensor_setting = runtime["sensors"]
         self.sensors = []
