@@ -37,7 +37,7 @@ class EvalSolver:
         detail_report = dict()
         report_for_update = [[], []]  # [[phen],[fitness]]
         for idx, simu_ele in enumerate(simu_report["pop"]):
-            logger.info(f"start to evaluate the new generated population [{idx}/{len(simu_ele['pop'])}]")
+            logger.info(f"start to evaluate the new generated population [{idx}/{len(simu_report['pop'])}]")
             res = self.eval_pop(simu_ele)
             for k in res.keys():
                 if k in detail_report.keys():
