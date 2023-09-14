@@ -28,8 +28,14 @@ class EvolutionSolver(BaseSolver):  # geatpy support
         "lidar": Lidar,
         "camera": Camera
     }
+
     def __init__(self, runtime):
         super().__init__(runtime)
+        self.name = self.name + "_[" + "_".join(runtime["evaluation"]["method_list"]) + "]_" + \
+                    runtime["optimization"]["parameters"]["nand"] + "_" + \
+                    runtime["optimization"]["parameters"]["generation"] + "_" + \
+                    runtime["optimization"]["parameters"]["F"] + "_" + \
+                    runtime["optimization"]["parameters"]["CR"] + f"_{time.time()}"
         self.sensor_list = self.system_setting["sensor_list"]
         self.sensor_setting = runtime["sensors"]
         self.sensors = []
@@ -39,7 +45,7 @@ class EvolutionSolver(BaseSolver):  # geatpy support
             for sensor_setting_tag in self.sensor_setting.keys():
                 if sensor_name == sensor_setting_tag:
                     for k in self.sensor_setting[sensor_setting_tag]:
-                        sensor.set_attribute_unsafe(k,self.sensor_setting[sensor_setting_tag][k])
+                        sensor.set_attribute_unsafe(k, self.sensor_setting[sensor_setting_tag][k])
                     break
 
         self.name = self.system_setting["name"] + "_" + self.optimization_setting["name"]
@@ -49,7 +55,6 @@ class EvolutionSolver(BaseSolver):  # geatpy support
         self.optimization_solver.set_sensors(self.sensors)
         self.evaluation_solver.set_sensors(self.sensors)
         logger.info("The system settings is loaded")
-
 
     def run(self):
         logger.info("setup initial population")
@@ -85,7 +90,6 @@ if __name__ == '__main__':
     # runtime["simulation"]["slice_count"] = args.slice_count
     # runtime["optimization"]["parameters"]["nand"] = args.nand
     # runtime["optimization"]["parameters"]["generation"] = args.generation
-    runtime["system"]["name"] += f"_{time.time()}"
     logger.info(f"Read configuration done.")
 
     solver = EvolutionSolver(runtime)
