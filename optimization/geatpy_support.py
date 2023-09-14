@@ -49,7 +49,7 @@ class SensorConfigurationProblem(ea.Problem):
                 np.hstack([self.fitness_buffer, np.array([f])])
             self.pop_buffer = pop if self.pop_buffer is None else \
                 np.vstack([self.pop_buffer, pop])
-        if len(self.fitness_buffer) > 200:  # 500:
+        if len(self.fitness_buffer) > 300:  # 500:
             mu = np.mean(self.fitness_buffer)
             sigma = np.std(self.fitness_buffer)
             lb = mu - 3 * sigma
