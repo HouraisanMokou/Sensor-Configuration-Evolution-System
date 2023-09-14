@@ -137,6 +137,41 @@ class PixEntropy(EvaluationMethods):
         return camera_c / camera_cnt / 0.06  # 0.06 is prior std
 
 
+class ModifiedPixEntropy(EvaluationMethods):
+    """only for camera"""
+
+    def __init__(self):
+        super().__init__()
+        self.result_name = "PixEN"
+
+    def run(self, simu_ele):
+        urls = simu_ele["urls"]
+
+        camera_c = 0
+        camera_cnt = 0
+        for scenario in urls:
+            all_sensors_datas = []
+            for sensor in scenario:
+                if "png" in sensor[0]:
+                    single_sensor_data = []
+                    for url in sensor:
+                        data = np.asarray(Image.open(url).convert('L'))
+                        single_sensor_data.append(data.flatten())
+                    all_sensors_datas.append(single_sensor_data)
+            all_sensors_datas = np.array(all_sensors_datas)
+            hs = []
+            for slice_idx in range(all_sensors_datas.shape[1]):
+                slice_data = all_sensors_datas[:, slice_idx, :].squeeze()
+                bins = np.bincount(slice_data.flatten()).astype('float')
+                bins = bins[bins != 0]
+                p = bins / np.sum(bins)
+                h = -np.sum(p * np.log2(p))
+                hs.append(h)
+            camera_c += np.mean(hs)
+            camera_cnt += 1
+        return camera_c / camera_cnt / 0.06  # 0.06 is prior std
+
+
 class CameraCoverage(EvaluationMethods):
     def __init__(self):
         super().__init__()

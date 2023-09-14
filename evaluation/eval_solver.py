@@ -166,6 +166,7 @@ class ComplexEvalSolver(EvalSolver):
         "camera_coverage": CameraCoverage,
         "temporal_entropy": TemporalEntropy,
         "pixel-level_entropy": PixEntropy,
+        "modified-pixel-level_entropy": ModifiedPixEntropy,
         "random": RandomEvaluation,
         "ssim": SSIM
     }

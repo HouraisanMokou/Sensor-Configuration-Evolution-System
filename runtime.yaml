@@ -27,7 +27,7 @@ simulation:
 
 # evaluation setting
 evaluation:
-  name: "perception entropy"
+  name: "combined"
   method_list: [ "camera_coverage","temporal_entropy","pixel-level_entropy" ]
   weights: [ 1,1,1 ]
 
