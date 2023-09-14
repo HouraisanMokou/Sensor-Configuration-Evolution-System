@@ -68,7 +68,7 @@ class SensorConfigurationProblem(ea.Problem):
         for sensor_idx, sensor in enumerate(self.sensors):
             phen_slice = phen[cnt:cnt + sensor.dim]
             cnt += sensor.dim
-            slices.append(sensor.blueprint_name + list(phen_slice))
+            slices.append([sensor.blueprint_name] + list(phen_slice))
         sorted_slices = sorted(slices, key=lambda x: (x[0], x[1], x[2]))
         sorted_phen = []
         for ss in sorted_slices:
