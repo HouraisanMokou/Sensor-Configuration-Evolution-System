@@ -35,7 +35,8 @@ class EvolutionSolver(BaseSolver):  # geatpy support
                     str(runtime["optimization"]["parameters"]["nand"]) + "_" + \
                     str(runtime["optimization"]["parameters"]["generation"]) + "_" + \
                     str(runtime["optimization"]["parameters"]["F"]) + "_" + \
-                    str(runtime["optimization"]["parameters"]["CR"]) + f"_{time.time()}"
+                    str(runtime["optimization"]["parameters"]["CR"]) + \
+                    self.optimization_setting["name"] + f"_{time.time()}"
         self.sensor_list = self.system_setting["sensor_list"]
         self.sensor_setting = runtime["sensors"]
         self.sensors = []
@@ -47,8 +48,6 @@ class EvolutionSolver(BaseSolver):  # geatpy support
                     for k in self.sensor_setting[sensor_setting_tag]:
                         sensor.set_attribute_unsafe(k, self.sensor_setting[sensor_setting_tag][k])
                     break
-
-        self.name = self.system_setting["name"] + "_" + self.optimization_setting["name"]
         self.simu_solver = SimuSolver(self.name, self.system_setting, self.simulation_setting)
         self.evaluation_solver = ComplexEvalSolver(self.name, self.system_setting, self.evaluation_setting)
         self.optimization_solver = DE_OptimSolver(self.name, self.system_setting, self.optimization_setting)
