@@ -60,7 +60,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
             self.lb += sensor.lb
             self.ub += sensor.ub
             cnt += sensor.dim
-        self.problem.set_sensors(self.sensors)
+        self.best_phen=[]
 
     def update_logger(self, detail_report):
         self.__append_logger_elements("gen", self.iter)
@@ -79,6 +79,8 @@ class GeatpySupportedOptimSolver(OptimSolver):
                 self.__append_logger_elements(f"mean_{k}", np.mean(detail_report[k]))
                 self.__append_logger_elements(f"std_{k}", np.std(detail_report[k]))
         objV = np.array(self.algorithm.population.ObjV)
+        best_idx = np.argmax(objV)
+        self.best_phen.append(self.algorithm.population.Phen[best_idx,:])
         self.__append_logger_elements("fitness_maximum", np.max(objV))
         self.__append_logger_elements("fitness_minimum", np.min(objV))
         self.__append_logger_elements("fitness_mean", np.mean(objV))
@@ -123,8 +125,8 @@ class GeatpySupportedOptimSolver(OptimSolver):
                 plt.legend(["max", "min", "avg"])
                 plt.savefig(os.path.join(self.output_result_path, f"gen--{k}.png"))
                 plt.close()
-        best_idx = np.argmax(self.state_logger['total'])
-        self.write_best(self.state_logger['phen'][best_idx], self.output_result_path)
+        # best_idx = np.argmax(self.state_logger['total'])
+        self.write_best(self.best_phen[-1], self.output_result_path)
         with open(os.path.join(self.output_result_path, "state_logger.txt"), "w") as f:
             f.write(str(self.state_logger))
         if self.iter % 5 == 0:
@@ -232,6 +234,7 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         self.algorithm = DE_currentToBest_1_L_online(
             self.problem, initial_population, self.F, self.CR, MAXGEN=self.generation
         )
+        self.problem.set_sensors(self.sensors)
 
         self.iter = 0
         # self.problem.set_kth(1)
