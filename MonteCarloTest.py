@@ -51,8 +51,8 @@ class MonteCarloSample:
         self.carla_path = "E:\\WindowsNoEditor\\CarlaUE4.exe"
         self.CSCI_path = "./CSCI"
         self.count = 15
-        self.input_path = "./workspace/monte_carlo/input"
-        self.output_path = "./workspace/monte_carlo/output"
+        self.input_path = os.path.abspath("./workspace/monte_carlo/input")
+        self.output_path = os.path.abspath("./workspace/monte_carlo/output")
         self.start_carla_cmd = f"{self.carla_path} -carla-rpc-port={self.port}"
         self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}"
         self.report_path="./collected_data/res.csv"
