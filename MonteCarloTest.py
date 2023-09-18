@@ -54,7 +54,7 @@ class MonteCarloSample:
         self.carla_path = runtime["simulation"]["carla_paths"]
         self.CSCI_path = runtime["simulation"]["CSCI_path"]
         self.count = runtime["simulation"]["slice_count"]
-        self.workspace=os.path.join(runtime["system"]["workspace_path"],"monte_carlo")
+        self.workspace = os.path.join(runtime["system"]["workspace_path"], "monte_carlo")
         self.input_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_input_dirname']}")
         self.output_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_result_dirname']}")
         self.start_carla_cmd = f"{self.carla_path} -carla-rpc-port={self.port}"
@@ -77,7 +77,7 @@ class MonteCarloSample:
 
     def eval(self, simu_report):
         totals = []
-        for simu_idx,simu_ele in enumerate(simu_report["pop"]):
+        for simu_idx, simu_ele in enumerate(simu_report["pop"]):
             logger.info(f'start to evaluate configuration [{simu_idx}/{len(simu_report["pop"])}]')
             total = 0
             scores = []
@@ -140,7 +140,7 @@ class MonteCarloSample:
                 for sensor_dir in os.listdir(os.path.join(path, scenario_dir)):
                     sensor_urls = []
                     for url in os.listdir(os.path.join(path, scenario_dir, sensor_dir)):
-                        sensor_urls.append(url)
+                        sensor_urls.append(os.path.join(self.output_path, str(idx), sensor_dir, sensor_dir, url))
                     scenario_urls.append(sensor_urls)
                 urls.append(scenario_urls)
             simu_report["pop"].append({
@@ -169,7 +169,7 @@ class MonteCarloSample:
 
 
 with open("config/MCtest_double_camera.yaml", 'r') as f:
-    yaml_dict=yaml.load(f,yaml.FullLoader)
+    yaml_dict = yaml.load(f, yaml.FullLoader)
     sampler = MonteCarloSample(yaml_dict)
     sampler.run()
 # sampler.run(2)
