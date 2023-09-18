@@ -141,7 +141,7 @@ class MonteCarloSample:
                 for sensor_dir in os.listdir(os.path.join(path, scenario_dir)):
                     sensor_urls = []
                     for url in os.listdir(os.path.join(path, scenario_dir, sensor_dir)):
-                        sensor_urls.append(os.path.join(self.output_path, str(idx), sensor_dir, sensor_dir, url))
+                        sensor_urls.append(os.path.join(self.output_path, str(idx), sensor_dir, url))
                     scenario_urls.append(sensor_urls)
                 urls.append(scenario_urls)
             simu_report["pop"].append({
