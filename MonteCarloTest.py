@@ -51,7 +51,7 @@ class MonteCarloSample:
         self.ub = np.array(self.ub)
 
         self.carla_pid = None
-        self.port = runtime["simulation"]["ports"]
+        self.port = runtime["simulation"]["ports"][0]
         self.carla_path = runtime["simulation"]["carla_paths"][0]
         self.CSCI_path = runtime["simulation"]["CSCI_path"]
         self.count = runtime["simulation"]["slice_count"]
