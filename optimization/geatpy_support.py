@@ -123,8 +123,8 @@ class DE_currentToBest_1_L_online(soea_DE_currentToBest_1_L_templet):
             F = F if F is not None else 0.3
             CR = CR if CR is not None else 0.6
             self.mutOper = ea.Mutde(F=F)  # 生成差分变异算子对象
-            self.muOpter2 = ea.Mutde(F=F / 2)
-            self.muOpter3 = ea.Mutde(F=F / 3)  # F delay
+            self.muOpter2 = ea.Mutde(F=F)
+            self.muOpter3 = ea.Mutde(F=F)  # F delay
             self.recOper = ea.Xovexp(XOVR=CR, Half_N=True)  # 生成指数交叉算子对象，这里的XOVR即为DE中的Cr
         else:
             raise RuntimeError('编码方式必须为''RI''.')

@@ -52,7 +52,7 @@ class MonteCarloSample:
 
         self.carla_pid = None
         self.port = runtime["simulation"]["ports"]
-        self.carla_path = runtime["simulation"]["carla_paths"]
+        self.carla_path = runtime["simulation"]["carla_paths"][0]
         self.CSCI_path = runtime["simulation"]["CSCI_path"]
         self.count = runtime["simulation"]["slice_count"]
         self.workspace = os.path.join(runtime["system"]["workspace_path"], "monte_carlo")

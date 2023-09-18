@@ -29,7 +29,7 @@ simulation:
 evaluation:
   name: "combined"
   method_list: [ "camera_coverage","modified-pixel-level_entropy","ssim" ]
-  weights: [ 1,1,0.3]
+  weights: [ 1,0,0.3]
 
 # optimization setting
 optimization:

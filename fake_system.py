@@ -114,7 +114,7 @@ class FakeEvoSolver(BaseSolver):
         self.problem.set_kth(1)
         phen, total = self.load_evaluation_buffer()
         self.problem.update_buffer(phen, total)
-        # self.pos_fitness_relation(phen,total)
+        self.pos_fitness_relation(phen,total)
         for iteration in range(self.generation):
             logger.info(f"start generation {iteration}")
             experiment_pop = self.algorithm.run_online()
@@ -210,7 +210,6 @@ class FakeEvoSolver(BaseSolver):
             ax.view_init(30, -30)
             plt.savefig(os.path.join(self.output_path, f"pos-fitness relation [{sensor_idx}]"))
             plt.close()
-
 
 if __name__ == "__main__":
     import yaml
