@@ -28,16 +28,16 @@ simulation:
 # evaluation setting
 evaluation:
   name: "combined"
-  method_list: [ "camera_coverage" ]
-  weights: [ 1]
+  method_list: [ "camera_coverage","modified-pixel-level_entropy","ssim" ]
+  weights: [ 1,1,0.3]
 
 # optimization setting
 optimization:
   name: "DE"
   parameters:
-    nand: 20
+    nand: 30
     generation: 30
-    F: 0.25
+    F: 0.3
     CR: 0.7
 
 # sensor setting

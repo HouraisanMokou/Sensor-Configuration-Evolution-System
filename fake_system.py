@@ -80,7 +80,7 @@ class FakeEvoSolver(BaseSolver):
             self.dim, self.varTypes, self.lb, self.ub
         )
         self.algorithm = DE_currentToBest_1_L_online(
-            self.problem, initial_population, self.F, self.CR, MAXGEN=self.generation,logTras=False
+            self.problem, initial_population, self.F, self.CR, MAXGEN=self.generation, logTras=False
         )
         self.algorithm.setup()
         self.problem.set_sensors(self.sensors)
@@ -101,7 +101,10 @@ class FakeEvoSolver(BaseSolver):
             partial_result = df.iloc[:, self.dim:-1].to_numpy()
             weights = np.tile(self.weights, partial_result.shape[0]).reshape(partial_result.shape[0], -1)
             total = np.sum(partial_result * weights, axis=1)
-            logger.info(f"max at\n {df.iloc[np.argmax(total), :]}")
+            max_idx = np.argmax(total)
+            logger.info(
+                f"\nmax at\n {df.iloc[max_idx, :self.dim]}\nwith fitness: {total[max_idx]}" +
+                f"\nstd of fitness: {np.std(total)}")
             return phen, total
         else:
             total = df.iloc[:, -1].tonumpy().squeeze()
@@ -111,7 +114,7 @@ class FakeEvoSolver(BaseSolver):
         self.problem.set_kth(1)
         phen, total = self.load_evaluation_buffer()
         self.problem.update_buffer(phen, total)
-        #self.pos_fitness_relation(phen,total)
+        # self.pos_fitness_relation(phen,total)
         for iteration in range(self.generation):
             logger.info(f"start generation {iteration}")
             experiment_pop = self.algorithm.run_online()
@@ -142,7 +145,6 @@ class FakeEvoSolver(BaseSolver):
         self.__append_logger_elements("fitness_minimum", np.min(objV))
         self.__append_logger_elements("fitness_mean", np.mean(objV))
 
-        logger.info(f"start to log for [{self.iter}]")
         plt.figure()
         plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_maximum"])
         plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_minimum"])
@@ -154,7 +156,7 @@ class FakeEvoSolver(BaseSolver):
     def pos_fitness_relation(self, batched_phen, fitness):
         cnt = 0
         for sensor_idx, sensor in enumerate(self.sensors):
-            logger.info(f"print pos-fitness relation figure for [{sensor_idx}] sensor")
+            logger.info(f"print pos-fitness relation figure for sensor [{sensor_idx}]")
             test_pos = np.array(batched_phen)[:, cnt:cnt + sensor.dim]
             cnt += sensor.dim
 
@@ -208,6 +210,7 @@ class FakeEvoSolver(BaseSolver):
             ax.view_init(30, -30)
             plt.savefig(os.path.join(self.output_path, f"pos-fitness relation [{sensor_idx}]"))
             plt.close()
+
 
 if __name__ == "__main__":
     import yaml
