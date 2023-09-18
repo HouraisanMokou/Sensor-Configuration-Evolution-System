@@ -15,7 +15,7 @@ from main import BaseSolver
 class FakeEvoSolver(BaseSolver):
     sensor_dict = {
         "lidar": Lidar,
-        "camera": NonRotationCamera
+        "camera": Camera
     }
 
     def __init__(self, runtime):
@@ -80,7 +80,7 @@ class FakeEvoSolver(BaseSolver):
             self.dim, self.varTypes, self.lb, self.ub
         )
         self.algorithm = DE_currentToBest_1_L_online(
-            self.problem, initial_population, self.F, self.CR, MAXGEN=self.generation
+            self.problem, initial_population, self.F, self.CR, MAXGEN=self.generation,logTras=False
         )
         self.algorithm.setup()
         self.problem.set_sensors(self.sensors)
@@ -101,6 +101,7 @@ class FakeEvoSolver(BaseSolver):
             partial_result = df.iloc[:, self.dim:-1].to_numpy()
             weights = np.tile(self.weights, partial_result.shape[0]).reshape(partial_result.shape[0], -1)
             total = np.sum(partial_result * weights, axis=1)
+            logger.info(f"max at\n {df.iloc[np.argmax(total), :]}")
             return phen, total
         else:
             total = df.iloc[:, -1].tonumpy().squeeze()
@@ -110,6 +111,7 @@ class FakeEvoSolver(BaseSolver):
         self.problem.set_kth(1)
         phen, total = self.load_evaluation_buffer()
         self.problem.update_buffer(phen, total)
+        #self.pos_fitness_relation(phen,total)
         for iteration in range(self.generation):
             logger.info(f"start generation {iteration}")
             experiment_pop = self.algorithm.run_online()
@@ -180,7 +182,7 @@ class FakeEvoSolver(BaseSolver):
                 for j in range(shape[1]):
                     dis = np.linalg.norm(test_pos[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
                     idxes = np.argpartition(dis, kth=kth)[:kth].astype('int')
-                    tmp_f = np.mean(np.array(self.state_logger["total"])[idxes])
+                    tmp_f = np.mean(np.array(fitness)[idxes])
                     f[i, j] = tmp_f
 
                     dis2 = np.linalg.norm(valid_places[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
@@ -210,7 +212,7 @@ class FakeEvoSolver(BaseSolver):
 if __name__ == "__main__":
     import yaml
 
-    with open("./config/MCtest.yaml", 'r') as f:
+    with open("config/MCtest_single_camera.yaml", 'r') as f:
         runtime = yaml.load(f, yaml.FullLoader)
     fake_solver = FakeEvoSolver(runtime)
     fake_solver.run()

@@ -167,7 +167,7 @@ class MonteCarloSample:
         return column_names
 
 
-with open("./config/MCtest.yaml",'r') as f:
+with open("config/MCtest_double_camera.yaml", 'r') as f:
     yaml_dict=yaml.load(f,yaml.FullLoader)
     sampler = MonteCarloSample(yaml_dict)
     sampler.run()
