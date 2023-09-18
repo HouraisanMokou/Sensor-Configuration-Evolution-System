@@ -25,7 +25,10 @@ class MonteCarloSample:
         "ssim": SSIM
     }
 
-    def __init__(self, sensor_list, method_list, weights):
+    def __init__(self, runtime):
+        sensor_list = runtime["system"]["sensor_list"]
+        method_list = runtime["evaluation"]["method_list"]
+        weights = runtime["evaluation"]["weights"]
         self.weights = np.array(weights)
         self.methods = []
         self.sensors = []
@@ -47,15 +50,16 @@ class MonteCarloSample:
         self.ub = np.array(self.ub)
 
         self.carla_pid = None
-        self.port = 2000
-        self.carla_path = "E:\\WindowsNoEditor\\CarlaUE4.exe"
-        self.CSCI_path = "./CSCI"
-        self.count = 15
-        self.input_path = os.path.abspath("./workspace/monte_carlo/input")
-        self.output_path = os.path.abspath("./workspace/monte_carlo/output")
+        self.port = runtime["simulation"]["ports"]
+        self.carla_path = runtime["simulation"]["carla_paths"]
+        self.CSCI_path = runtime["simulation"]["CSCI_path"]
+        self.count = runtime["simulation"]["slice_cnt"]
+        self.workspace=os.path.join(runtime["simulation"]["workspace_path"],"monte_carlo_"+str(time.time()))
+        self.input_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_input_dirname']}")
+        self.output_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_result_dirname']}")
         self.start_carla_cmd = f"{self.carla_path} -carla-rpc-port={self.port}"
         self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}"
-        self.report_path="./collected_data/res.csv"
+        self.report_path = "./collected_data/res.csv"
 
         self.simu = False  # True
 
@@ -67,20 +71,20 @@ class MonteCarloSample:
             self.system_call(self.start_CSCI_cmd, self.start_carla_cmd)
         simu_report = self.collect_simu_info(sampled)
         eval_results = np.array(self.eval(simu_report))
-        combined = np.hstack([sampled,eval_results])
-        dataframe=pd.DataFrame(data=combined)
-        dataframe.to_csv(self.report_path,header=None,index=False)
+        combined = np.hstack([sampled, eval_results])
+        dataframe = pd.DataFrame(data=combined, columns=self.get_columns_name())
+        dataframe.to_csv(self.report_path, index=False)
 
     def eval(self, simu_report):
         totals = []
         for simu_ele in simu_report["pop"]:
             total = 0
-            scores=[]
+            scores = []
             for idx, method in enumerate(self.methods):
                 score = method.run(simu_ele)
                 total += score * self.weights[idx]
                 scores.append(score)
-            totals.append(scores+[total])
+            totals.append(scores + [total])
         return totals
 
     def random_sample(self, batch=200):
@@ -144,8 +148,29 @@ class MonteCarloSample:
             })
         return simu_report
 
+    def rerun_evaluation(self):
+        '''
+        only can be used when the structure of original file is not changed
+        '''
+        df = pd.read_csv(self.report_path)
+        retest_phen = df.iloc[:, :self.dim].to_numpy()
+        simu_report = self.collect_simu_info(retest_phen)
+        eval_results = np.array(self.eval(simu_report))
+        combined = np.hstack([retest_phen, eval_results])
+        dataframe = pd.DataFrame(data=combined, columns=self.get_columns_name())
+        dataframe.to_csv(self.report_path, index=False)
 
-sampler = MonteCarloSample(["camera"], ["camera_coverage"], [1])
-sampler.run(2)
+    def get_columns_name(self):
+        attr_names = [str(i) for i in range(self.dim)]
+        method_names = [m.result_name for m in self.methods]
+        column_names = attr_names + method_names + ["total"]
+        return column_names
+
+
+with open("./config/MCtest.yaml",'r') as f:
+    yaml_dict=yaml.load(f,yaml.FullLoader)
+    sampler = MonteCarloSample(yaml_dict)
+    sampler.run()
+# sampler.run(2)
 # sampled = sampler.random_sample(2)
 # sampler.write_yaml_dicts(sampler.batched_phen2yaml(sampled), "./workspace/monte_carlo")

@@ -35,7 +35,7 @@ class EvolutionSolver(BaseSolver):  # geatpy support
                     str(runtime["optimization"]["parameters"]["nand"]) + "_" + \
                     str(runtime["optimization"]["parameters"]["generation"]) + "_" + \
                     str(runtime["optimization"]["parameters"]["F"]) + "_" + \
-                    str(runtime["optimization"]["parameters"]["CR"]) + \
+                    str(runtime["optimization"]["parameters"]["CR"]) + "_" + \
                     self.optimization_setting["name"] + f"_{time.time()}"
         self.sensor_list = self.system_setting["sensor_list"]
         self.sensor_setting = runtime["sensors"]

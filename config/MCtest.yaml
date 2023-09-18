@@ -1,0 +1,47 @@
+# system setting
+system:
+  name: "test"
+  OS: "win"
+  workspace_path: "./workspace"
+  simu_input_dirname: "input"
+  simu_result_dirname: "output"
+  simu_broken_rerun_input_dirname: "rerun_input"
+  simu_broken_rerun_output_dirname: "rerun_output"
+  visual_result_dirname: "res"
+  sensor_list: [ "camera","camera" ]
+
+# simulation setting
+simulation:
+  CSCI_path: "./CSCI"
+  carla_paths: [ "E:\\WindowsNoEditor\\CarlaUE4.exe" ]
+  ports: [ 2000 ]
+  slice_count: 5
+  wait_record_time: 3
+  scenario_info:
+    - name: 'test_scenario5'
+      record_file: './scenarios/test_scenario5.log'
+      ego_vehicle_actor_id: 420
+      time:
+        start: 0
+        end: 10
+
+# evaluation setting
+evaluation:
+  name: "combined"
+  method_list: [ "camera_coverage","pixel-level_entropy" ]
+  weights: [ 1,1]
+
+# optimization setting
+optimization:
+  name: "DE"
+  parameters:
+    nand: 100
+    generation: 30
+    F: 0.25
+    CR: 0.7
+
+# sensor setting
+sensors:
+  camera:
+    image_size_x: 720
+    image_size_y: 720
