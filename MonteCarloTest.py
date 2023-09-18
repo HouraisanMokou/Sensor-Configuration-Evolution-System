@@ -53,7 +53,7 @@ class MonteCarloSample:
         self.port = runtime["simulation"]["ports"]
         self.carla_path = runtime["simulation"]["carla_paths"]
         self.CSCI_path = runtime["simulation"]["CSCI_path"]
-        self.count = runtime["simulation"]["slice_cnt"]
+        self.count = runtime["simulation"]["slice_count"]
         self.workspace=os.path.join(runtime["simulation"]["workspace_path"],"monte_carlo_"+str(time.time()))
         self.input_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_input_dirname']}")
         self.output_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_result_dirname']}")
