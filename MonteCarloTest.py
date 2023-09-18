@@ -78,7 +78,7 @@ class MonteCarloSample:
     def eval(self, simu_report):
         totals = []
         for simu_idx,simu_ele in enumerate(simu_report["pop"]):
-            logger.info(f'start to evaluate configuration [{simu_idx}]th')
+            logger.info(f'start to evaluate configuration [{simu_idx}/{len(simu_report["pop"])}]')
             total = 0
             scores = []
             for idx, method in enumerate(self.methods):
