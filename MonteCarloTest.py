@@ -76,10 +76,8 @@ class MonteCarloSampler:
         eval_results = np.array(self.eval(simu_report))
         combined = np.hstack([sampled, eval_results])
         dataframe = pd.DataFrame(data=combined, columns=self.get_columns_name())
-        if append:
-            dataframe.to_csv(self.report_path,mode='a', index=False)
-        else:
-            dataframe.to_csv(self.report_path, index=False)
+        mode = 'a' if append else 'w'
+        dataframe.to_csv(self.report_path, mode=mode, index=False)
 
     def eval(self, simu_report):
         totals = []
