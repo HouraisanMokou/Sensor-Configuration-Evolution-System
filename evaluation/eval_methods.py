@@ -183,7 +183,7 @@ class CameraCoverage(EvaluationMethods):
         x_lim = 50
         y_lim = 20
         z_lim = 4
-        self.voxel_len = 0.01
+        self.voxel_len = 0.1
         self.interest_space = np.array(
             list(itertools.product(np.arange(-x_lim / self.voxel_len, x_lim / self.voxel_len),
                                    np.arange(-y_lim / self.voxel_len, y_lim / self.voxel_len),
