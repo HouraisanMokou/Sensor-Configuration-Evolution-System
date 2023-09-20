@@ -20,7 +20,7 @@ class FakeEvoSolver(BaseSolver):
 
     def __init__(self, runtime):
         super().__init__(runtime)
-        self.buffered_data_path = "./collected_data/res.csv"
+        self.buffered_data_path = "./collected_data/double/res.csv"
         self.recompute_total = True
         if self.recompute_total:
             self.weights = runtime["evaluation"]["weights"]
@@ -101,7 +101,8 @@ class FakeEvoSolver(BaseSolver):
             partial_result = df.iloc[:, self.dim:-1].to_numpy()
             weights = np.tile(self.weights, partial_result.shape[0]).reshape(partial_result.shape[0], -1)
             total = np.sum(partial_result * weights, axis=1)
-            max_idx = np.argmax(total)
+            kth = 6
+            max_idx = np.argpartition(-total, kth=kth)[:kth].astype('int')  # np.argmax(total)
             logger.info(
                 f"\nmax at\n {df.iloc[max_idx, :self.dim]}\nwith fitness: {total[max_idx]}" +
                 f"\nstd of fitness: {np.std(total)}")
@@ -114,7 +115,7 @@ class FakeEvoSolver(BaseSolver):
         self.problem.set_kth(1)
         phen, total = self.load_evaluation_buffer()
         self.problem.update_buffer(phen, total)
-        self.pos_fitness_relation(phen,total)
+        self.pos_fitness_relation(phen, total)
         for iteration in range(self.generation):
             logger.info(f"start generation {iteration}")
             experiment_pop = self.algorithm.run_online()
@@ -158,6 +159,7 @@ class FakeEvoSolver(BaseSolver):
         for sensor_idx, sensor in enumerate(self.sensors):
             logger.info(f"print pos-fitness relation figure for sensor [{sensor_idx}]")
             test_pos = np.array(batched_phen)[:, cnt:cnt + sensor.dim]
+            fields = self.algorithm.population.Field[:, cnt:cnt + sensor.dim]
             cnt += sensor.dim
 
             fig = plt.figure()
@@ -180,17 +182,29 @@ class FakeEvoSolver(BaseSolver):
             f = np.zeros(shape)
             z = np.zeros(shape)
 
+            def gaussian_distribution(x, sigma=1 / 3):
+                exp = np.exp(-1 / (2 * (sigma ** 2)) * (x ** 2))
+                return exp
+
+            def back(x):
+                a=fields[0, :] + (fields[1, :] - fields[0, :]) * x
+                return a
+
             for i in range(shape[0]):
                 for j in range(shape[1]):
-                    dis = np.linalg.norm(test_pos[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
+                    dis = np.linalg.norm(test_pos[:,:2] - np.array([x[i], y[j]]), 2, axis=1)
                     idxes = np.argpartition(dis, kth=kth)[:kth].astype('int')
-                    tmp_f = np.mean(np.array(fitness)[idxes])
+                    tmp_f = np.mean(np.array(fitness)[
+                                        idxes])  # np.sum(np.array(fitness)[idxes]*gaussian_distribution(dis[idxes]))/np.sum(dis[idxes])
                     f[i, j] = tmp_f
 
                     dis2 = np.linalg.norm(valid_places[:, :2] - np.array([x[i], y[j]]), 2, axis=1)
                     idxes2 = np.argpartition(dis2, kth=kth)[:kth].astype('int')
                     z[i, j] = np.mean(valid_places[idxes2, 2])
 
+            # z_positions=[]
+            # for idx in range(test_pos.shape[0]):
+            #     z_positions.append(sensor.parameter_decompress(test_pos[idx,:2])[2]-sensor.offset+0.1)
             f = f.T
             z = z.T
 
@@ -208,13 +222,15 @@ class FakeEvoSolver(BaseSolver):
             ax.grid(False)
             ax.axis('off')
             ax.view_init(30, -30)
-            plt.savefig(os.path.join(self.output_path, f"pos-fitness relation [{sensor_idx}]"))
+            # ax.scatter(test_pos[:,0],test_pos[:,1],z_positions)
+            plt.savefig(os.path.join(self.output_path, f"pos-fitness relation [{sensor_idx}]"), dpi=300)
             plt.close()
+
 
 if __name__ == "__main__":
     import yaml
 
-    with open("config/MCtest_single_camera.yaml", 'r') as f:
+    with open("config/MCtest_double_camera.yaml", 'r') as f:
         runtime = yaml.load(f, yaml.FullLoader)
     fake_solver = FakeEvoSolver(runtime)
     fake_solver.run()

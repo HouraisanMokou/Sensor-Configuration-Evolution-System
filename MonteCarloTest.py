@@ -11,7 +11,7 @@ from optimization.evolutionary_sensor import *
 from evaluation.eval_methods import *
 
 
-class MonteCarloSample:
+class MonteCarloSampler:
     sensor_dict = {
         "lidar": Lidar,
         "camera": Camera,
@@ -37,13 +37,13 @@ class MonteCarloSample:
         self.lb = []
         self.ub = []
         for sensor_name in sensor_list:
-            sensor = MonteCarloSample.sensor_dict[sensor_name]()
+            sensor = MonteCarloSampler.sensor_dict[sensor_name]()
             self.sensors.append(sensor)
             self.dim += sensor.dim
             self.lb += sensor.lb
             self.ub += sensor.ub
         for method in method_list:
-            m = MonteCarloSample.method_dict[method]()
+            m = MonteCarloSampler.method_dict[method]()
             m.set_sensors(self.sensors)
             self.methods.append(m)
 
@@ -66,6 +66,8 @@ class MonteCarloSample:
 
     def run(self, batch=200):
         sampled = self.random_sample(batch)
+        df_phen_list=pd.DataFrame(data=sampled,columns=[_ for _ in range(sampled.shape[1])])
+        df_phen_list.to_csv(self.report_path)
         yaml_dicts = self.batched_phen2yaml(sampled)
         self.write_yaml_dicts(yaml_dicts, self.input_path)
         if self.simu:
@@ -171,7 +173,7 @@ class MonteCarloSample:
 
 with open("config/MCtest_double_camera.yaml", 'r') as f:
     yaml_dict = yaml.load(f, yaml.FullLoader)
-    sampler = MonteCarloSample(yaml_dict)
+    sampler = MonteCarloSampler(yaml_dict)
     sampler.run()
 # sampler.run(2)
 # sampled = sampler.random_sample(2)

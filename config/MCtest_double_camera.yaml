@@ -28,14 +28,14 @@ simulation:
 # evaluation setting
 evaluation:
   name: "combined"
-  method_list: [ "camera_coverage","pixel-level_entropy" ]
-  weights: [ 1,1]
+  method_list: [ "camera_coverage","temporal_entropy","pixel-level_entropy" ]
+  weights: [ 1,1,0.3 ]
 
 # optimization setting
 optimization:
   name: "DE"
   parameters:
-    nand: 20
+    nand: 50
     generation: 30
     F: 0.25
     CR: 0.7
