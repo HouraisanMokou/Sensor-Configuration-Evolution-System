@@ -21,7 +21,7 @@ class MonteCarloSampler:
         "camera_coverage": CameraCoverage,
         "temporal_entropy": TemporalEntropy,
         "pixel-level_entropy": PixEntropy,
-        "modified-pixel-level_entropy":ModifiedPixEntropy,
+        "modified-pixel-level_entropy": ModifiedPixEntropy,
         "random": RandomEvaluation,
         "ssim": SSIM
     }
@@ -64,10 +64,10 @@ class MonteCarloSampler:
 
         self.simu = False  # True
 
-    def run(self, batch=200):
+    def run(self, batch=200, append=True):
         sampled = self.random_sample(batch)
-        df_phen_list=pd.DataFrame(data=sampled,columns=[_ for _ in range(sampled.shape[1])])
-        df_phen_list.to_csv(self.report_path)
+        df_phen_list = pd.DataFrame(data=sampled, columns=[_ for _ in range(sampled.shape[1])])
+        df_phen_list.to_csv(self.report_path+"_bp")
         yaml_dicts = self.batched_phen2yaml(sampled)
         self.write_yaml_dicts(yaml_dicts, self.input_path)
         if self.simu:
@@ -76,7 +76,10 @@ class MonteCarloSampler:
         eval_results = np.array(self.eval(simu_report))
         combined = np.hstack([sampled, eval_results])
         dataframe = pd.DataFrame(data=combined, columns=self.get_columns_name())
-        dataframe.to_csv(self.report_path, index=False)
+        if append:
+            dataframe.to_csv(self.report_path,mode='a', index=False)
+        else:
+            dataframe.to_csv(self.report_path, index=False)
 
     def eval(self, simu_report):
         totals = []
@@ -143,7 +146,7 @@ class MonteCarloSampler:
                 for sensor_dir in os.listdir(os.path.join(path, scenario_dir)):
                     sensor_urls = []
                     for url in os.listdir(os.path.join(path, scenario_dir, sensor_dir)):
-                        sensor_urls.append(os.path.join(self.output_path, str(idx),scenario_dir, sensor_dir, url))
+                        sensor_urls.append(os.path.join(self.output_path, str(idx), scenario_dir, sensor_dir, url))
                     scenario_urls.append(sensor_urls)
                 urls.append(scenario_urls)
             simu_report["pop"].append({
