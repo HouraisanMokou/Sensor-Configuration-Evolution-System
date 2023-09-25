@@ -224,7 +224,7 @@ class CameraCoverage(EvaluationMethods):
             lb_above2 = (z_min - sensor_z_pos) / (x_max - phen_slice[0])
             ub_above = np.tan((phen_slice[3] + half_fov) * np.pi / 180)
             mask1 = (tans[:, 0] > lb_above)
-            mask3 = (tans[:, 0] > lb_above2)
+            mask3 = (tans[:, 1] > lb_above2)
             mask2 = (tans[:, 1] > lb_lateral)
             mask4 = (tans[:, 0] < ub_above)
             mask5 = (tans[:, 1] < ub_lateral)
