@@ -233,11 +233,16 @@ class CameraCoverage(EvaluationMethods):
                 mask = np.logical_and(mask, m)
             total_mask = mask.astype('float') if total_mask is None else total_mask + (mask.astype('float'))
         total_mask = total_mask[total_mask != 0]
+        cover_mask = (total_mask != 0)
+        usable = self.interest_space.copy()
+        above_cover = np.unique(usable[cover_mask, :2], axis=0)
+        above_mean = np.mean(above_cover, axis=0)
+        l1_dis = np.sum(np.abs(above_mean))
         # score = np.sum((2-0.5**(total_mask-1))/(2-0.5**(len(self.sensors)-1)))
         # score = np.sum(np.log2(1 + total_mask))
         q = 1 / 3  # q<1
         score = np.sum((1 - q ** total_mask) / (1 - q))
-        return score / 917825.6544354344  # 931260.7241582343 is prior std
+        return score / 917825.6544354344 + l1_dis/71.27676996853923 # 931260.7241582343 is prior std
 
 
 class SSIM(EvaluationMethods):
