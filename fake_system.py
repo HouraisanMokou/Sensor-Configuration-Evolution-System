@@ -108,7 +108,12 @@ class FakeEvoSolver(BaseSolver):
                 f"\nstd of fitness: {np.std(total)}")
             return phen, total
         else:
-            total = df.iloc[:, -1].tonumpy().squeeze()
+            total = df.iloc[:, -1].to_numpy().squeeze()
+            kth = 6
+            max_idx = np.argpartition(-total, kth=kth)[:kth].astype('int')  # np.argmax(total)
+            logger.info(
+                f"\nmax at\n {df.iloc[max_idx, :self.dim]}\nwith fitness: {total[max_idx]}" +
+                f"\nstd of fitness: {np.std(total)}")
             return phen, total
 
     def run(self):
