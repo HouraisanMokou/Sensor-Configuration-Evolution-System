@@ -190,7 +190,7 @@ class CameraCoverage(EvaluationMethods):
                                    np.arange(0, z_lim / self.voxel_len)))).astype(float)
 
         X = self.interest_space
-        scale = 20
+        scale = 120
         sigma_x = 0.75 * scale
         sigma_y = 1 * scale
         self.weights = self.gaussian(X[:, 0] - np.mean(X[:, 0]), sigma_x) * self.gaussian(X[:, 1] - np.mean(X[:, 1]),
