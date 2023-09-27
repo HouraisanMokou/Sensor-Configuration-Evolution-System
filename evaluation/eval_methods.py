@@ -196,10 +196,10 @@ class CameraCoverage(EvaluationMethods):
         self.weights = self.gaussian(X[:, 0] - np.mean(X[:, 0]), sigma_x) * self.gaussian(X[:, 1] - np.mean(X[:, 1]),
                                                                                      sigma_y)
 
-        self.interest_space = self.interest_space[
-                              self.interest_space[:, 0] ** 2 + self.interest_space[:, 1] ** 2 + self.interest_space[:,
-                                                                                                2] ** 2 > 16,
-                              :]
+        # self.interest_space = self.interest_space[
+        #                       self.interest_space[:, 0] ** 2 + self.interest_space[:, 1] ** 2 + self.interest_space[:,
+        #                                                                                         2] ** 2 > 16,
+        #                       :]
 
     def gaussian(self, x, sigma):
         exp = np.exp(-1 / (2 * (sigma ** 2)) * (x ** 2))
