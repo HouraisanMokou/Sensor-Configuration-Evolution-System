@@ -248,7 +248,7 @@ class CameraCoverage(EvaluationMethods):
         # score = np.sum(np.log2(1 + total_mask))
         q = 1 / 3  # q<1
         score = np.sum(self.weights*(1 - q ** total_mask) / (1 - q))
-        return score / 176.82301103044975  # 931260.7241582343 is prior std
+        return score / 64187.99722693875  # 931260.7241582343 is prior std
 
 
 class SSIM(EvaluationMethods):
