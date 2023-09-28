@@ -188,13 +188,21 @@ class CameraCoverage(EvaluationMethods):
             list(itertools.product(np.arange(-x_lim / self.voxel_len, x_lim / self.voxel_len + 1),
                                    np.arange(-y_lim / self.voxel_len, y_lim / self.voxel_len + 1),
                                    np.arange(0, z_lim / self.voxel_len)))).astype(float)
-
+        m1 = (self.interest_space[:, 0] > -1.5)
+        m2 = (self.interest_space[:, 0] < 1.5)
+        m3 = (self.interest_space[:, 1] > -0.5)
+        m4 = (self.interest_space[:, 0] < 0.5)
+        mask =m1
+        for m in [m2,m3,m4]:
+            mask = np.logical_and(mask, m)
+        mask = np.logical_not(mask)
+        self.interest_space=self.interest_space[mask,:]
         X = self.interest_space
         scale = 120
         sigma_x = 0.75 * scale
         sigma_y = 1 * scale
         self.weights = self.gaussian(X[:, 0] - np.mean(X[:, 0]), sigma_x) * self.gaussian(X[:, 1] - np.mean(X[:, 1]),
-                                                                                     sigma_y)
+                                                                                          sigma_y)
 
         # self.interest_space = self.interest_space[
         #                       self.interest_space[:, 0] ** 2 + self.interest_space[:, 1] ** 2 + self.interest_space[:,
@@ -247,7 +255,7 @@ class CameraCoverage(EvaluationMethods):
         # score = np.sum((2-0.5**(total_mask-1))/(2-0.5**(len(self.sensors)-1)))
         # score = np.sum(np.log2(1 + total_mask))
         q = 1 / 3  # q<1
-        score = np.sum(self.weights*(1 - q ** total_mask) / (1 - q))
+        score = np.sum(self.weights * (1 - q ** total_mask) / (1 - q))
         return score / 64187.99722693875  # 931260.7241582343 is prior std
 
 
