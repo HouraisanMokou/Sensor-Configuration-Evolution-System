@@ -26,7 +26,8 @@ class BaseSolver:
 class EvolutionSolver(BaseSolver):  # geatpy support
     sensor_dict = {
         "lidar": Lidar,
-        "camera": Camera
+        "camera": Camera,
+        "defined-fov-camera": DefinedFovCamera
     }
 
     def __init__(self, runtime):
