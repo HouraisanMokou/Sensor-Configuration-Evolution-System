@@ -245,8 +245,8 @@ class DefinedFovCamera(EvolutionarySensor):
         self.image_size_x = 720
         self.image_size_y = 720
 
-        self.dim = 5
-        self.varTypes = [0, 0, 0, 0, 0]
+        self.dim = 4
+        self.varTypes = [0, 0, 0, 0]
         self.lb = [np.min(self.valid_points[:, 0]),
                    np.min(self.valid_points[:, 1]),
                    self.min_rotation_pitch,
