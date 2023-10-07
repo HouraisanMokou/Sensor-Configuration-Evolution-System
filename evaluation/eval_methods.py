@@ -192,11 +192,11 @@ class CameraCoverage(EvaluationMethods):
         m2 = (self.interest_space[:, 0] < 1.5)
         m3 = (self.interest_space[:, 1] > -0.5)
         m4 = (self.interest_space[:, 0] < 0.5)
-        mask =m1
-        for m in [m2,m3,m4]:
+        mask = m1
+        for m in [m2, m3, m4]:
             mask = np.logical_and(mask, m)
         mask = np.logical_not(mask)
-        self.interest_space=self.interest_space[mask,:]
+        self.interest_space = self.interest_space[mask, :]
         X = self.interest_space
         scale = 120
         sigma_x = 0.75 * scale
@@ -220,8 +220,12 @@ class CameraCoverage(EvaluationMethods):
         total_mask = None
         for sensor in self.sensors:
             phen_slice = phen[cnt:cnt + sensor.dim]
-            if sensor.dim != 5:
+            # if sensor.dim != 5:
+            #     phen_slice = [phen_slice[0], phen_slice[1], 0, 0, 90]
+            if sensor.dim == 2:
                 phen_slice = [phen_slice[0], phen_slice[1], 0, 0, 90]
+            elif sensor.dim == 4:
+                phen_slice = [phen_slice[0], phen_slice[1], phen_slice[2], phen_slice[3], 90]
             sensor_z_pos = sensor.parameter_decompress(phen_slice[:2])[2]
             cnt += sensor.dim
 
