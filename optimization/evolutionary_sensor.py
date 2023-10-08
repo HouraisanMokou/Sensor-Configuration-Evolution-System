@@ -5,7 +5,7 @@ from loguru import logger
 class Sensor:
     def __init__(self):
         self.points_path = "./config/points.txt"
-        self.offset = 0.3
+        self.offset = 0
         self.min_rotation = -45
         self.max_rotation = 45
 
