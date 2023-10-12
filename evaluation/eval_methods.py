@@ -258,7 +258,7 @@ class CameraCoverage(EvaluationMethods):
             tan1 = (usable[:, 1] - phen_slice[1] / voxel_len) / div1
             tan2 = (usable[:, 2] - sensor_z_pos / voxel_len) / div1
             tan3 = (usable[:, 2] - sensor_z_pos / voxel_len) / div2
-            tans = np.vstack([tan1, tan2]).T
+            tans = np.vstack([tan1, tan2, tan3]).T
             half_fov = fov / 2
             lb_lateral = np.tan((phen_slice[2] - half_fov) * np.pi / 180)
             ub_lateral = np.tan((phen_slice[2] + half_fov) * np.pi / 180)
@@ -283,7 +283,7 @@ class CameraCoverage(EvaluationMethods):
         # score = np.sum(np.log2(1 + total_mask))
         q = 1 / 3  # q<1
         score = np.sum(self.weights * (1 - q ** total_mask) / (1 - q))
-        return score  # 931260.7241582343 is prior std
+        return score / 0.06786838117594476  # 931260.7241582343 is prior std
 
 
 class SSIM(EvaluationMethods):
