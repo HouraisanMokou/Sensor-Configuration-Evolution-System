@@ -198,11 +198,21 @@ class CameraCoverage(EvaluationMethods):
         mask = np.logical_not(mask)
         self.interest_space = self.interest_space[mask, :]
         X = self.interest_space
-        scale = 120
-        sigma_x = 0.75 * scale
-        sigma_y = 1 * scale
-        self.weights = self.gaussian(X[:, 0] - np.mean(X[:, 0]), sigma_x) * self.gaussian(X[:, 1] - np.mean(X[:, 1]),
-                                                                                          sigma_y)
+        # scale = 120
+        # sigma_x = 0.75 * scale
+        # sigma_y = 1 * scale
+        # self.weights = self.gaussian(X[:, 0] - np.mean(X[:, 0]), sigma_x) * self.gaussian(X[:, 1] - np.mean(X[:, 1]),
+        #                                                                                   sigma_y)
+
+        with open("./config/distribution.txt", 'r') as f:
+            distribution_dict = eval(f.read())
+            x_dis = np.array(distribution_dict['x'])
+            y_dis = np.array(distribution_dict['y'])
+            z_dis = np.array(distribution_dict['z'])
+        x_w = np.log2(x_dis[X[:, 0].astype(int) + int(x_lim / self.voxel_len)] + 1)
+        y_w = np.log2(y_dis[X[:, 1].astype(int) + int(y_lim / self.voxel_len)] + 1)
+        z_w = np.log2(z_dis[X[:, 2].astype(int)] + 1)
+        self.weights = x_w * y_w * z_w
 
         # self.interest_space = self.interest_space[
         #                       self.interest_space[:, 0] ** 2 + self.interest_space[:, 1] ** 2 + self.interest_space[:,
