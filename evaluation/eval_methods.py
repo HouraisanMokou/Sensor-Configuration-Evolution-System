@@ -3,11 +3,13 @@ give each component of final evaluation
 """
 import itertools
 from collections import Counter
+from util import util
 
 import numpy as np
 import cv2
 from PIL import Image
 from loguru import logger
+import open3d as o3d
 
 
 class EvaluationMethods:
@@ -158,6 +160,8 @@ class ModifiedPixEntropy(EvaluationMethods):
                         data = np.asarray(Image.open(url).convert('L'))
                         single_sensor_data.append(data.flatten())
                     all_sensors_datas.append(single_sensor_data)
+            if len(all_sensors_datas) == 0:
+                continue
             all_sensors_datas = np.array(all_sensors_datas)
             hs = []
             for slice_idx in range(all_sensors_datas.shape[1]):
@@ -169,13 +173,15 @@ class ModifiedPixEntropy(EvaluationMethods):
                 hs.append(h)
             camera_c += np.mean(hs)
             camera_cnt += 1
+        if camera_cnt == 0:
+            return 0
         return camera_c / camera_cnt / 0.06  # 0.06 is prior std
 
 
 class CameraCoverage(EvaluationMethods):
     def __init__(self):
         super().__init__()
-        self.result_name = "coverage"
+        self.result_name = "coverage_camera"
         self.sensors = None
         self.point_file = "./config/points.txt"
         with open(self.point_file, "r") as f:
@@ -235,52 +241,55 @@ class CameraCoverage(EvaluationMethods):
         y_min = np.min(self.points[:, 1]) - offset
 
         for sensor in self.sensors:
-            phen_slice = phen[cnt:cnt + sensor.dim]
-            # if sensor.dim != 5:
-            #     phen_slice = [phen_slice[0], phen_slice[1], 0, 0, 90]
-            if sensor.dim == 2:
-                phen_slice = [phen_slice[0], phen_slice[1], 0, 0, 90]
-            elif sensor.dim == 4:
-                phen_slice = [phen_slice[0], phen_slice[1], phen_slice[2], phen_slice[3], 90]
-            sensor_z_pos = sensor.parameter_decompress(phen_slice[:2])[2]
-            cnt += sensor.dim
+            if "png" in sensor.result_suffix:
+                phen_slice = phen[cnt:cnt + sensor.dim]
+                # if sensor.dim != 5:
+                #     phen_slice = [phen_slice[0], phen_slice[1], 0, 0, 90]
+                if sensor.dim == 2:
+                    phen_slice = [phen_slice[0], phen_slice[1], 0, 0, 90]
+                elif sensor.dim == 4:
+                    phen_slice = [phen_slice[0], phen_slice[1], phen_slice[2], phen_slice[3], 90]
+                sensor_z_pos = sensor.parameter_decompress(phen_slice[:2])[2]
+                cnt += sensor.dim
 
-            fov = phen_slice[-1]
-            voxel_len = self.voxel_len
+                fov = phen_slice[-1]
+                voxel_len = self.voxel_len
 
-            usable = self.interest_space.copy()
-            mask6 = (usable[:, 0] > phen_slice[0] / voxel_len)
-            usable[np.logical_not(mask6), :] = 1
-            div1 = usable[:, 0] - phen_slice[0] / voxel_len
-            div1[div1 == 0] = 1e-8
-            div2 = usable[:, 1] - phen_slice[1] / voxel_len
-            div2[div2 == 0] = 1e-8
-            tan1 = (usable[:, 1] - phen_slice[1] / voxel_len) / div1
-            tan2 = (usable[:, 2] - sensor_z_pos / voxel_len) / div1
-            tan3 = (usable[:, 2] - sensor_z_pos / voxel_len) / div2
-            tans = np.vstack([tan1, tan2, tan3]).T
-            half_fov = fov / 2
-            lb_lateral = np.tan((phen_slice[2] - half_fov) * np.pi / 180)
-            ub_lateral = np.tan((phen_slice[2] + half_fov) * np.pi / 180)
-            lb_above = np.tan((-phen_slice[3] - half_fov) * np.pi / 180)
-            lb_above2 = (z_min - sensor_z_pos) / (x_max - phen_slice[0])
-            ub_above = np.tan((-phen_slice[3] + half_fov) * np.pi / 180)
-            bound1 = (sensor_z_pos - z_min) / (y_max - phen_slice[1])
-            bound2 = (sensor_z_pos - z_min) / (y_min - phen_slice[1])
-            mask1 = (tans[:, 0] > lb_above)
-            mask3 = (tans[:, 1] > lb_above2)
-            mask2 = (tans[:, 1] > lb_lateral)
-            mask4 = (tans[:, 0] < ub_above)
-            mask5 = (tans[:, 1] < ub_lateral)
-            mm = ((tans[:, 2] > 0) & (tans[:, 2] < bound1)) | ((tans[:, 2] < 0) & (tans[:, 2] > bound2))
-            mask7 = mm | (usable[:, 2] > sensor_z_pos / voxel_len)
-            mask = mask1
-            for m in [mask2, mask3, mask4, mask5, mask6, mask7]:
-                mask = np.logical_and(mask, m)
-            total_mask = mask.astype('float') if total_mask is None else total_mask + (mask.astype('float'))
+                usable = self.interest_space.copy()
+                mask6 = (usable[:, 0] > phen_slice[0] / voxel_len)
+                usable[np.logical_not(mask6), :] = 1
+                div1 = usable[:, 0] - phen_slice[0] / voxel_len
+                div1[div1 == 0] = 1e-8
+                div2 = usable[:, 1] - phen_slice[1] / voxel_len
+                div2[div2 == 0] = 1e-8
+                tan1 = (usable[:, 1] - phen_slice[1] / voxel_len) / div1
+                tan2 = (usable[:, 2] - sensor_z_pos / voxel_len) / div1
+                tan3 = (usable[:, 2] - sensor_z_pos / voxel_len) / div2
+                tans = np.vstack([tan1, tan2, tan3]).T
+                half_fov = fov / 2
+                lb_lateral = np.tan((phen_slice[2] - half_fov) * np.pi / 180)
+                ub_lateral = np.tan((phen_slice[2] + half_fov) * np.pi / 180)
+                lb_above = np.tan((-phen_slice[3] - half_fov) * np.pi / 180)
+                lb_above2 = (z_min - sensor_z_pos) / (x_max - phen_slice[0])
+                ub_above = np.tan((-phen_slice[3] + half_fov) * np.pi / 180)
+                bound1 = (sensor_z_pos - z_min) / (y_max - phen_slice[1])
+                bound2 = (sensor_z_pos - z_min) / (y_min - phen_slice[1])
+                mask1 = (tans[:, 0] > lb_above)
+                mask3 = (tans[:, 1] > lb_above2)
+                mask2 = (tans[:, 1] > lb_lateral)
+                mask4 = (tans[:, 0] < ub_above)
+                mask5 = (tans[:, 1] < ub_lateral)
+                mm = ((tans[:, 2] > 0) & (tans[:, 2] < bound1)) | ((tans[:, 2] < 0) & (tans[:, 2] > bound2))
+                mask7 = mm | (usable[:, 2] > sensor_z_pos / voxel_len)
+                mask = mask1
+                for m in [mask2, mask3, mask4, mask5, mask6, mask7]:
+                    mask = np.logical_and(mask, m)
+                total_mask = mask.astype('float') if total_mask is None else total_mask + (mask.astype('float'))
         # total_mask = total_mask[total_mask != 0]
         # score = np.sum((2-0.5**(total_mask-1))/(2-0.5**(len(self.sensors)-1)))
         # score = np.sum(np.log2(1 + total_mask))
+        if total_mask is None:
+            return 0
         q = 1 / 3  # q<1
         score = np.sum(self.weights * (1 - q ** total_mask) / (1 - q))
         return score / 0.06786838117594476  # 931260.7241582343 is prior std
@@ -334,3 +343,98 @@ class SSIM(EvaluationMethods):
             score.append(scenario_res)
         score = - np.mean(score)  # ssim is higher, the configuration is more similar
         return score / 0.04  # 0.04 is prior std
+
+
+class LidarCoverage(EvaluationMethods):
+    def __init__(self):
+        super().__init__()
+        self.result_name = "coverage_lidar"
+        self.sensors = None
+        self.voxel_len = 0.1
+
+    def run(self, simu_ele):
+        urls = simu_ele["urls"]
+        phen = simu_ele["phen"]
+        phen_slices = []
+        cnt = 0
+        for sensor in self.sensors:
+            phen_slice = phen[cnt:cnt + sensor.dim]
+            cnt += sensor.dim
+            phen_slices.append(phen_slice)
+
+        scores = []
+        for scenario in urls:
+            total_data = None
+            for sensor_url, sensor_solver, phen_slice in zip(scenario, self.sensors, phen_slices):
+                if "ply" in sensor_solver.result_suffix:
+                    data = o3d.io.read_point_cloud(sensor_url)
+                    data = np.array(data.points).T.astype(float)
+                    x = phen_slice[0]
+                    y = phen_slice[1]
+                    z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
+                    t = np.array([[x], [y], [z]])
+                    pitch = phen_slice[0]
+                    # (x,y,pitch)
+                    data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
+                    total_data = data if total_data is None else np.hstack([total_data, data])
+            if total_data is None:
+                scores.append(0)
+                continue
+            voxels = np.round(total_data / self.voxel_len)
+            counter = Counter(voxels)
+            count = np.array(list(counter.values()))
+            score = np.sum(np.log2(count + 1))
+            scores.append(score)
+
+        return np.mean(scores)
+
+
+class LidarPerceptionEntropy(EvaluationMethods):
+    def __init__(self):
+        super().__init__()
+        self.result_name = "coverage_lidar"
+        self.sensors = None
+        self.voxel_len = 0.1
+
+    def run(self, simu_ele):
+        a = 0.156
+        b = 0.1
+        urls = simu_ele["urls"]
+        phen = simu_ele["phen"]
+        phen_slices = []
+        cnt = 0
+        for sensor in self.sensors:
+            phen_slice = phen[cnt:cnt + sensor.dim]
+            cnt += sensor.dim
+            phen_slices.append(phen_slice)
+
+        scores = []
+        for scenario in urls:
+            total_data = None
+            for sensor_url, sensor_solver, phen_slice in zip(scenario, self.sensors, phen_slices):
+                if "ply" in sensor_solver.result_suffix:
+                    data = o3d.io.read_point_cloud(sensor_url)
+                    data = np.array(data.points).T.astype(float)
+                    x = phen_slice[0]
+                    y = phen_slice[1]
+                    z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
+                    t = np.array([[x], [y], [z]])
+                    pitch = phen_slice[0]
+                    # (x,y,pitch)
+                    data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
+                    total_data = data if total_data is None else np.hstack([total_data, data])
+            if total_data is None:
+                scores.append(0)
+                continue
+            voxels = np.round(total_data / self.voxel_len)
+            counter = Counter(voxels)
+            count = np.array(list(counter.values()))
+            ap = a * np.log(count) + b
+            ap = np.array([_ for _ in ap if _ > 0])
+            ap[ap > 1] = 1
+            sigma = 1 / ap - 1
+            sigma = [_ for _ in sigma if _ > 0]
+            score = 2 * np.log(sigma) + 1 + np.log(2 * np.pi)
+            scores.append(score)
+
+        return np.mean(scores)
