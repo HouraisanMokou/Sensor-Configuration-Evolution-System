@@ -168,7 +168,9 @@ class ComplexEvalSolver(EvalSolver):
         "pixel-level_entropy": PixEntropy,
         "modified-pixel-level_entropy": ModifiedPixEntropy,
         "random": RandomEvaluation,
-        "ssim": SSIM
+        "ssim": SSIM,
+        "coverage_lidar":LidarCoverage,
+        "perception_entropy":LidarPerceptionEntropy
     }
 
     def __init__(self, name, system_settings, settings):
