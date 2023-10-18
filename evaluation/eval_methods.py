@@ -364,77 +364,77 @@ class LidarCoverage(EvaluationMethods):
 
         scores = []
         for scenario in urls:
-            total_data = None
-            for sensor_url, sensor_solver, phen_slice in zip(scenario, self.sensors, phen_slices):
-                if "ply" in sensor_solver.result_suffix:
-                    data = o3d.io.read_point_cloud(sensor_url)
-                    data = np.array(data.points).T.astype(float)
-                    x = phen_slice[0]
-                    y = phen_slice[1]
-                    z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
-                    t = np.array([[x], [y], [z]])
-                    pitch = phen_slice[0]
-                    # (x,y,pitch)
-                    data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
-                    total_data = data if total_data is None else np.hstack([total_data, data])
-            if total_data is None:
-                scores.append(0)
-                continue
-            voxels = np.round(total_data / self.voxel_len)
-            counter = Counter(voxels)
-            count = np.array(list(counter.values()))
-            score = np.sum(np.log2(count + 1))
-            scores.append(score)
-
+            slice_cnt = len(scenario[0])  # sensor cnt is not related with type of sensor
+            for idx in range(slice_cnt):
+                total_data = None
+                for sensor, sensor_solver, phen_slice in zip(scenario, self.sensors, phen_slices):
+                    if "ply" in sensor_solver.result_suffix:
+                        data = o3d.io.read_point_cloud(sensor[idx])
+                        data = np.array(data.points).T.astype(float)
+                        x = phen_slice[0]
+                        y = phen_slice[1]
+                        z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
+                        t = np.array([[x], [y], [z]])
+                        pitch = phen_slice[0]
+                        # (x,y,pitch)
+                        data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
+                        total_data = data if total_data is None else np.hstack([total_data, data])
+                if total_data is None:
+                    return 0
+                voxels = np.round(total_data / self.voxel_len)
+                counter = Counter(voxels)
+                count = np.array(list(counter.values()))
+                score = np.sum(np.log2(count + 1))
+                scores.append(score)
         return np.mean(scores)
 
+    class LidarPerceptionEntropy(EvaluationMethods):
+        def __init__(self):
+            super().__init__()
+            self.result_name = "coverage_lidar"
+            self.sensors = None
+            self.voxel_len = 0.1
 
-class LidarPerceptionEntropy(EvaluationMethods):
-    def __init__(self):
-        super().__init__()
-        self.result_name = "coverage_lidar"
-        self.sensors = None
-        self.voxel_len = 0.1
+        def run(self, simu_ele):
+            a = 0.156
+            b = 0.1
+            urls = simu_ele["urls"]
+            phen = simu_ele["phen"]
+            phen_slices = []
+            cnt = 0
+            for sensor in self.sensors:
+                phen_slice = phen[cnt:cnt + sensor.dim]
+                cnt += sensor.dim
+                phen_slices.append(phen_slice)
 
-    def run(self, simu_ele):
-        a = 0.156
-        b = 0.1
-        urls = simu_ele["urls"]
-        phen = simu_ele["phen"]
-        phen_slices = []
-        cnt = 0
-        for sensor in self.sensors:
-            phen_slice = phen[cnt:cnt + sensor.dim]
-            cnt += sensor.dim
-            phen_slices.append(phen_slice)
+            scores = []
+            for scenario in urls:
+                slice_cnt = len(scenario[0])  # sensor cnt is not related with type of sensor
+                for idx in range(slice_cnt):
+                    total_data = None
+                    for sensor, sensor_solver, phen_slice in zip(scenario, self.sensors, phen_slices):
+                        if "ply" in sensor_solver.result_suffix:
+                            data = o3d.io.read_point_cloud(sensor[idx])
+                            data = np.array(data.points).T.astype(float)
+                            x = phen_slice[0]
+                            y = phen_slice[1]
+                            z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
+                            t = np.array([[x], [y], [z]])
+                            pitch = phen_slice[0]
+                            # (x,y,pitch)
+                            data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
+                            total_data = data if total_data is None else np.hstack([total_data, data])
+                    if total_data is None:
+                        return 0
+                    voxels = np.round(total_data / self.voxel_len)
+                    counter = Counter(voxels)
+                    count = np.array(list(counter.values()))
+                    ap = a * np.log(count) + b
+                    ap = np.array([_ for _ in ap if _ > 0])
+                    ap[ap > 1] = 1
+                    sigma = 1 / ap - 1
+                    sigma = [_ for _ in sigma if _ > 0]
+                    score = 2 * np.log(sigma) + 1 + np.log(2 * np.pi)
+                    scores.append(score)
 
-        scores = []
-        for scenario in urls:
-            total_data = None
-            for sensor_url, sensor_solver, phen_slice in zip(scenario, self.sensors, phen_slices):
-                if "ply" in sensor_solver.result_suffix:
-                    data = o3d.io.read_point_cloud(sensor_url)
-                    data = np.array(data.points).T.astype(float)
-                    x = phen_slice[0]
-                    y = phen_slice[1]
-                    z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
-                    t = np.array([[x], [y], [z]])
-                    pitch = phen_slice[0]
-                    # (x,y,pitch)
-                    data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
-                    total_data = data if total_data is None else np.hstack([total_data, data])
-            if total_data is None:
-                scores.append(0)
-                continue
-            voxels = np.round(total_data / self.voxel_len)
-            counter = Counter(voxels)
-            count = np.array(list(counter.values()))
-            ap = a * np.log(count) + b
-            ap = np.array([_ for _ in ap if _ > 0])
-            ap[ap > 1] = 1
-            sigma = 1 / ap - 1
-            sigma = [_ for _ in sigma if _ > 0]
-            score = 2 * np.log(sigma) + 1 + np.log(2 * np.pi)
-            scores.append(score)
-
-        return np.mean(scores)
+            return np.mean(scores)
