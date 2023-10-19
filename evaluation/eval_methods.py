@@ -394,7 +394,7 @@ class LidarCoverage(EvaluationMethods):
 class LidarPerceptionEntropy(EvaluationMethods):
     def __init__(self):
         super().__init__()
-        self.result_name = "coverage_lidar"
+        self.result_name = "perception_entropy"
         self.sensors = None
         self.voxel_len = 0.1
 
