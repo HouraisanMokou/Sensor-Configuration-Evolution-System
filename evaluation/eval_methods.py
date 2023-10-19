@@ -375,7 +375,7 @@ class LidarCoverage(EvaluationMethods):
                         y = phen_slice[1]
                         z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
                         t = np.array([[x], [y], [z]])
-                        pitch = phen_slice[0]
+                        pitch = phen_slice[2]
                         # (x,y,pitch)
                         data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
                         total_data = data if total_data is None else np.hstack([total_data, data])
@@ -422,7 +422,7 @@ class LidarPerceptionEntropy(EvaluationMethods):
                         y = phen_slice[1]
                         z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
                         t = np.array([[x], [y], [z]])
-                        pitch = phen_slice[0]
+                        pitch = phen_slice[2]
                         # (x,y,pitch)
                         data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
                         total_data = data if total_data is None else np.hstack([total_data, data])

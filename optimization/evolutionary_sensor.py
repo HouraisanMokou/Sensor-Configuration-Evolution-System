@@ -114,6 +114,8 @@ class Lidar(EvolutionarySensor):
         self.blueprint_name = "sensor.lidar.ray_cast"
         # attribute
         self.points_per_second = 60000
+        self.min_rotation = -30
+        self.max_rotation = 30
 
         self.dim = 3
         self.varTypes = [0, 0, 0]
@@ -228,6 +230,7 @@ class NonRotationCamera(EvolutionarySensor):
     def compose_pos(self, pos_line):
         return [pos_line["x"], pos_line["y"]]
 
+
 class DefinedFovCamera(EvolutionarySensor):
     '''
     phen:[x,y,pitch,yaw,fov]
@@ -264,9 +267,11 @@ class DefinedFovCamera(EvolutionarySensor):
             "image_size_x": self.image_size_x,
             "image_size_y": self.image_size_y,
         }
+
     def decompose_pos(self, phen_slice):
         pos = self.parameter_decompress(phen_slice[:2])
         return {"x": float(pos[0]), "y": float(pos[1]), "z": float(pos[2]), "pitch": float(phen_slice[2]), "roll": 0,
                 "yaw": float(phen_slice[3])}
+
     def compose_pos(self, pos_line):
         return [pos_line["x"], pos_line["y"], pos_line["pitch"], pos_line["yaw"]]
