@@ -383,7 +383,7 @@ class LidarCoverage(EvaluationMethods):
                 if total_data is None:
                     return 0
                 voxels = np.round(total_data / self.voxel_len)
-                voxels = list(map(tuple, voxels))
+                voxels = list(map(tuple, voxels.T))
                 counter = Counter(voxels)
                 count = np.array(list(counter.values()))
                 score = np.sum(np.log2(count + 1))
