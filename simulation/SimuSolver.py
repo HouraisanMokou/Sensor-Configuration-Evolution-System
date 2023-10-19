@@ -69,8 +69,8 @@ class SimuTask:
 
     def setup(self):
         # renew scenario.yaml
-        with open(os.path.join(self.CSCI_path, 'scenario.yaml')) as f:
-            yaml.dump(self.scenario_info)
+        with open(os.path.join(self.CSCI_path, 'scenario.yaml'), 'w') as f:
+            yaml.dump(self.scenario_info, f)
         logger.info("Simulation module has set up and started fort its first run.")
         self.system_call(self.start_CSCI_cmd, self.start_carla_cmd)
 

@@ -60,7 +60,7 @@ class MonteCarloSampler:
         self.output_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_result_dirname']}")
         self.start_carla_cmd = f"{self.carla_path} -carla-rpc-port={self.port}"
         self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}"
-        self.report_path = "./collected_data/res.csv"
+        self.report_path = "collected_data/double_non_rotation2/res.csv"
 
         self.simu = False  # True
 

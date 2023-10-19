@@ -15,12 +15,12 @@ from main import BaseSolver
 class FakeEvoSolver(BaseSolver):
     sensor_dict = {
         "lidar": Lidar,
-        "camera": Camera
+        "camera": DefinedFovCamera
     }
 
     def __init__(self, runtime):
         super().__init__(runtime)
-        self.buffered_data_path = "./collected_data/double/res.csv"
+        self.buffered_data_path = "./collected_data/single/res.csv"
         self.recompute_total = True
         if self.recompute_total:
             self.weights = runtime["evaluation"]["weights"]
@@ -101,7 +101,7 @@ class FakeEvoSolver(BaseSolver):
             partial_result = df.iloc[:, self.dim:-1].to_numpy()
             weights = np.tile(self.weights, partial_result.shape[0]).reshape(partial_result.shape[0], -1)
             total = np.sum(partial_result * weights, axis=1)
-            kth = 6
+            kth = 10
             max_idx = np.argpartition(-total, kth=kth)[:kth].astype('int')  # np.argmax(total)
             logger.info(
                 f"\nmax at\n {df.iloc[max_idx, :self.dim]}\nwith fitness: {total[max_idx]}" +
@@ -109,7 +109,7 @@ class FakeEvoSolver(BaseSolver):
             return phen, total
         else:
             total = df.iloc[:, -1].to_numpy().squeeze()
-            kth = 6
+            kth = 10
             max_idx = np.argpartition(-total, kth=kth)[:kth].astype('int')  # np.argmax(total)
             logger.info(
                 f"\nmax at\n {df.iloc[max_idx, :self.dim]}\nwith fitness: {total[max_idx]}" +
@@ -120,7 +120,7 @@ class FakeEvoSolver(BaseSolver):
         self.problem.set_kth(1)
         phen, total = self.load_evaluation_buffer()
         self.problem.update_buffer(phen, total)
-        # self.pos_fitness_relation(phen, total)
+        self.pos_fitness_relation(phen, total)
         for iteration in range(self.generation):
             logger.info(f"start generation {iteration}")
             experiment_pop = self.algorithm.run_online()
@@ -235,7 +235,8 @@ class FakeEvoSolver(BaseSolver):
 if __name__ == "__main__":
     import yaml
 
-    with open("config/MCtest_double_camera.yaml", 'r') as f:
+    with open("config/MCtest_single_camera.yaml", 'r') as f:
         runtime = yaml.load(f, yaml.FullLoader)
     fake_solver = FakeEvoSolver(runtime)
+    # fake_solver.recompute_total=False
     fake_solver.run()
