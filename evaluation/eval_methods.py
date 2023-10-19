@@ -290,8 +290,9 @@ class CameraCoverage(EvaluationMethods):
         # score = np.sum(np.log2(1 + total_mask))
         if total_mask is None:
             return 0
-        q = 1 / 3  # q<1
-        score = np.sum(self.weights * (1 - q ** total_mask) / (1 - q))
+        # q = 1 / 3  # q<1
+        # score = np.sum(self.weights * (1 - q ** total_mask) / (1 - q))
+        score = np.sum(self.weights * (np.log2(total_mask+1)))
         return score / 0.06786838117594476  # 931260.7241582343 is prior std
 
 
@@ -429,7 +430,7 @@ class LidarPerceptionEntropy(EvaluationMethods):
                 if total_data is None:
                     return 0
                 voxels = np.round(total_data / self.voxel_len)
-                voxels = list(map(tuple, voxels))
+                voxels = list(map(tuple, voxels.T))
                 counter = Counter(voxels)
                 count = np.array(list(counter.values()))
                 ap = a * np.log(count) + b
@@ -437,7 +438,7 @@ class LidarPerceptionEntropy(EvaluationMethods):
                 ap[ap > 1] = 1
                 sigma = 1 / ap - 1
                 sigma = [_ for _ in sigma if _ > 0]
-                score = 2 * np.log(sigma) + 1 + np.log(2 * np.pi)
+                score = np.mean(2 * np.log(sigma) + 1 + np.log(2 * np.pi))
                 scores.append(score)
 
         return np.mean(scores)

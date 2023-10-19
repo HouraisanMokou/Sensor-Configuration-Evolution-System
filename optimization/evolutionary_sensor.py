@@ -5,7 +5,7 @@ from loguru import logger
 class Sensor:
     def __init__(self):
         self.points_path = "./config/points.txt"
-        self.offset = 0
+        self.offset = 0.2
         self.min_rotation = -45
         self.max_rotation = 45
 
@@ -113,9 +113,10 @@ class Lidar(EvolutionarySensor):
         super().__init__()
         self.blueprint_name = "sensor.lidar.ray_cast"
         # attribute
-        self.points_per_second = 60000
+        self.points_per_second = 120000
         self.min_rotation = -30
         self.max_rotation = 30
+        self.offset = 0.1
 
         self.dim = 3
         self.varTypes = [0, 0, 0]
