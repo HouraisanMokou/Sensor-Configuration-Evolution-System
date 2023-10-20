@@ -14,8 +14,8 @@ def cloud_tf_inverse(cloud, t, roll, pitch, yaw):
     Rz = np.array([[np.cos(yaw), -np.sin(yaw), 0],
                    [np.sin(yaw), np.cos(yaw), 0],
                    [0, 0, 1]])
-    cloud = cloud + t
     cloud = np.linalg.pinv(Rx) @ cloud
     cloud = np.linalg.pinv(Ry) @ cloud
     cloud = np.linalg.pinv(Rz) @ cloud
+    cloud = cloud + t
     return cloud
