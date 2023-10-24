@@ -116,7 +116,7 @@ class Lidar(EvolutionarySensor):
         self.points_per_second = 120000
         self.min_rotation = -30
         self.max_rotation = 30
-        self.offset = 0.1
+        self.offset = 0.2
 
         self.dim = 3
         self.varTypes = [0, 0, 0]

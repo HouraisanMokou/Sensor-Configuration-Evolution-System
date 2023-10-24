@@ -388,7 +388,7 @@ class LidarCoverage(EvaluationMethods):
                 count = np.array(list(counter.values()))
                 score = np.sum(np.log2(count + 1))
                 scores.append(score)
-        return np.mean(scores)
+        return np.mean(scores)/500
 
 
 class LidarPerceptionEntropy(EvaluationMethods):
@@ -438,7 +438,8 @@ class LidarPerceptionEntropy(EvaluationMethods):
                 ap[ap > 1] = 1
                 sigma = 1 / ap - 1
                 sigma = [_ for _ in sigma if _ > 0]
+                sigma = [_ for _ in sigma if not np.isnan(_)]
                 score = np.mean(2 * np.log(sigma) + 1 + np.log(2 * np.pi))
-                scores.append(score)
+                scores.append(-score)
 
-        return np.mean(scores)
+        return np.mean(scores)/0.08
