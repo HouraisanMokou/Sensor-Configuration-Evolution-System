@@ -380,7 +380,9 @@ class LidarCoverage(EvaluationMethods):
                         # (x,y,pitch)
                         data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
                         mask1 = np.logical_not(
-                            (data[0, :] > -1.5) and (data[0, :] < 1.5) and (data[1, :] > -0.5) and (data[1, :] < 0.5))
+                            np.logical_and(
+                                (data[0, :] > -1.5), (data[0, :] < 1.5), (data[1, :] > -0.5), (data[1, :] < 0.5)
+                            ))
                         data = data[:, mask1]
                         total_data = data if total_data is None else np.hstack([total_data, data])
                 if total_data is None:
@@ -430,7 +432,9 @@ class LidarPerceptionEntropy(EvaluationMethods):
                         # (x,y,pitch)
                         data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
                         mask1 = np.logical_not(
-                            (data[0, :] > -1.5) and (data[0, :] < 1.5) and (data[1, :] > -0.5) and (data[1, :] < 0.5))
+                            np.logical_and(
+                                (data[0, :] > -1.5), (data[0, :] < 1.5), (data[1, :] > -0.5), (data[1, :] < 0.5)
+                            ))
                         data = data[:, mask1]
                         # mask2 = ((data[0, :] > -self.x_lim) and (data[0, :] < self.x_lim) and (
                         #             data[1, :] > -self.y_lim) and (data[1, :] < self.y_lim)) and (
