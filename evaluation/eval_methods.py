@@ -292,7 +292,7 @@ class CameraCoverage(EvaluationMethods):
             return 0
         # q = 1 / 3  # q<1
         # score = np.sum(self.weights * (1 - q ** total_mask) / (1 - q))
-        score = np.sum(self.weights * (np.log2(total_mask+1)))
+        score = np.sum(self.weights * (np.log2(total_mask + 1)))
         return score / 0.06786838117594476  # 931260.7241582343 is prior std
 
 
@@ -379,16 +379,19 @@ class LidarCoverage(EvaluationMethods):
                         pitch = phen_slice[2]
                         # (x,y,pitch)
                         data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
+                        mask1 = np.logical_not(
+                            (data[0, :] > -1.5) and (data[0, :] < 1.5) and (data[1, :] > -0.5) and (data[1, :] < 0.5))
+                        data = data[:, mask1]
                         total_data = data if total_data is None else np.hstack([total_data, data])
                 if total_data is None:
                     return 0
                 voxels = np.round(total_data / self.voxel_len)
                 voxels = list(map(tuple, voxels.T))
                 counter = Counter(voxels)
-                #count = np.array(list(counter.values()))
-                score = len(list(counter.keys()))#np.sum(np.log2(count + 1))
+                # count = np.array(list(counter.values()))
+                score = len(list(counter.keys()))  # np.sum(np.log2(count + 1))
                 scores.append(score)
-        return np.mean(scores)/500
+        return np.mean(scores) / 500
 
 
 class LidarPerceptionEntropy(EvaluationMethods):
@@ -426,6 +429,12 @@ class LidarPerceptionEntropy(EvaluationMethods):
                         pitch = phen_slice[2]
                         # (x,y,pitch)
                         data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
+                        mask1 = np.logical_not(
+                            (data[0, :] > -1.5) and (data[0, :] < 1.5) and (data[1, :] > -0.5) and (data[1, :] < 0.5))
+                        data = data[:, mask1]
+                        # mask2 = ((data[0, :] > -self.x_lim) and (data[0, :] < self.x_lim) and (
+                        #             data[1, :] > -self.y_lim) and (data[1, :] < self.y_lim)) and (
+                        #                     data[2, :] < self.z_lim)
                         total_data = data if total_data is None else np.hstack([total_data, data])
                 if total_data is None:
                     return 0
@@ -442,4 +451,4 @@ class LidarPerceptionEntropy(EvaluationMethods):
                 score = np.mean(2 * np.log(sigma) + 1 + np.log(2 * np.pi))
                 scores.append(-score)
 
-        return np.mean(scores)/0.08
+        return np.mean(scores) / 0.08
