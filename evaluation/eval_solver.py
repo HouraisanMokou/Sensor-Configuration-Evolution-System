@@ -170,7 +170,8 @@ class ComplexEvalSolver(EvalSolver):
         "random": RandomEvaluation,
         "ssim": SSIM,
         "coverage_lidar": LidarCoverage,
-        "perception_entropy": LidarPerceptionEntropy
+        "perception_entropy": LidarPerceptionEntropy,
+        'w-coverage_lidar':WeightedLidarCoverage
     }
 
     def __init__(self, name, system_settings, settings):

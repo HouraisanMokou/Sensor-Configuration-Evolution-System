@@ -381,7 +381,7 @@ class LidarCoverage(EvaluationMethods):
                         data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
                         mask1 = np.logical_not(
                             (data[0, :] > -1.5) & (data[0, :] < 1.5) & (data[1, :] > -0.5) & (data[1, :] < 0.5)
-                            )
+                        )
                         data = data[:, mask1]
                         total_data = data if total_data is None else np.hstack([total_data, data])
                 if total_data is None:
@@ -391,6 +391,65 @@ class LidarCoverage(EvaluationMethods):
                 counter = Counter(voxels)
                 # count = np.array(list(counter.values()))
                 score = len(list(counter.keys()))  # np.sum(np.log2(count + 1))
+                scores.append(score)
+        return np.mean(scores) / 500
+
+
+class WeightedLidarCoverage(EvaluationMethods):
+    def __init__(self):
+        super().__init__()
+        self.result_name = "coverage_lidar"
+        self.sensors = None
+        self.voxel_len = 0.1
+
+        with open("./config/distribution.txt", 'r') as f:
+            distribution_dict = eval(f.read())
+            self.x_dis = np.array(distribution_dict['x'])
+            self.y_dis = np.array(distribution_dict['y'])
+            self.z_dis = np.array(distribution_dict['z'])
+
+    def run(self, simu_ele):
+        urls = simu_ele["urls"]
+        phen = simu_ele["phen"]
+        phen_slices = []
+        cnt = 0
+        for sensor in self.sensors:
+            phen_slice = phen[cnt:cnt + sensor.dim]
+            cnt += sensor.dim
+            phen_slices.append(phen_slice)
+
+        scores = []
+        for scenario in urls:
+            slice_cnt = len(scenario[0])  # sensor cnt is not related with type of sensor
+            for idx in range(slice_cnt):
+                total_data = None
+                for sensor, sensor_solver, phen_slice in zip(scenario, self.sensors, phen_slices):
+                    if "ply" in sensor_solver.result_suffix:
+                        data = o3d.io.read_point_cloud(sensor[idx])
+                        data = np.array(data.points).T.astype(float)
+                        x = phen_slice[0]
+                        y = phen_slice[1]
+                        z = sensor_solver.parameter_decompress(phen_slice[:2])[2]
+                        t = np.array([[x], [y], [z]])
+                        pitch = phen_slice[2]
+                        # (x,y,pitch)
+                        data = util.cloud_tf_inverse(data, t, 0, pitch, 0)
+                        mask1 = np.logical_not(
+                            (data[0, :] > -1.5) & (data[0, :] < 1.5) & (data[1, :] > -0.5) & (data[1, :] < 0.5)
+                        )
+                        data = data[:, mask1]
+                        total_data = data if total_data is None else np.hstack([total_data, data])
+                if total_data is None:
+                    return 0
+                voxels = np.round(total_data / self.voxel_len)
+                voxels = list(map(tuple, voxels.T))
+                counter = Counter(voxels)
+                pos = np.array(list(counter.keys()))
+                # count = np.array(list(counter.values()))
+                weighted = np.log2(self.x_dis[pos[:, 0].astype(int) + int(50 / self.voxel_len)] + 1) * \
+                           np.log2(self.y_dis[pos[:, 1].astype(int) + int(20 / self.voxel_len)] + 1) * \
+                           np.log2(self.z_dis[pos[:, 2].astype(int)] + 1)
+                score = np.sum(weighted)  # np.sum(np.log2(count + 1))
                 scores.append(score)
         return np.mean(scores) / 500
 
