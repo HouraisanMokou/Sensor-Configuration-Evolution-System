@@ -317,10 +317,10 @@ class SSIM(EvaluationMethods):
                 if "png" in sensor[0]:
                     sensor_meta = []
                     for url in sensor:
-                        data = np.asarray(Image.open(url).convert("L")).astype('float').flatten()
-                        mu_data = np.mean(data)
-                        std_data = np.std(data)
-                        sensor_meta.append((data, mu_data, std_data))
+                        data = np.asarray(Image.open(url).convert("L")).astype('float')
+                        # mu_data = np.mean(data)
+                        # std_data = np.std(data)
+                        sensor_meta.append(data)
                     scenario_meta.append(sensor_meta)
             scenario_res = []
             for idx1, sensor_meta1 in enumerate(scenario_meta):
