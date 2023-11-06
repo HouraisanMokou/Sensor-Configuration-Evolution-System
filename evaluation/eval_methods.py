@@ -10,6 +10,7 @@ import cv2
 from PIL import Image
 from loguru import logger
 import open3d as o3d
+from skimage.metrics import structural_similarity
 
 
 class EvaluationMethods:
@@ -330,13 +331,14 @@ class SSIM(EvaluationMethods):
                     for slice_idx in range(len(sensor_meta1)):
                         meta1 = sensor_meta1[slice_idx]
                         meta2 = sensor_meta2[slice_idx]
-                        cov = np.cov(meta1[0], meta2[0])[0, 1]
-                        mu_x = meta1[1]
-                        mu_y = meta2[1]
-                        std_x = meta1[2]
-                        std_y = meta2[2]
-                        ssim = (2 * mu_x * mu_y + c1) * (2 * cov + c2) / (
-                                (mu_x ** 2 + mu_y ** 2 + c1) * (std_x ** 2 + std_y ** 2 + c2))
+                        ssim = structural_similarity(meta1,meta2)
+                        # cov = np.cov(meta1[0], meta2[0])[0, 1]
+                        # mu_x = meta1[1]
+                        # mu_y = meta2[1]
+                        # std_x = meta1[2]
+                        # std_y = meta2[2]
+                        # ssim = (2 * mu_x * mu_y + c1) * (2 * cov + c2) / (
+                        #         (mu_x ** 2 + mu_y ** 2 + c1) * (std_x ** 2 + std_y ** 2 + c2))
                         ssim_list.append(ssim)
                     mean_ssim = np.mean(ssim_list)
                     scenario_res.append(mean_ssim)
