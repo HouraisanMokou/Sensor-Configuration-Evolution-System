@@ -75,6 +75,18 @@ class SensorConfigurationProblem(ea.Problem):
             sorted_phen += ss[1:]
         return np.array(sorted_phen)
 
+    def distribution(self, d):
+        dis = []
+        for d_idx, _d in enumerate(d):
+            if d_idx == 0 and np.abs(_d) < 1e-3:
+                p = 1
+            elif d_idx > 0:
+                p = ((1 - _d) ** (len(self.pop_buffer) - d_idx + 1)) * (_d ** (d_idx - 1))
+            else:
+                p = ((1 - _d) ** (len(self.pop_buffer) - d_idx)) * (_d ** (d_idx))
+            dis.append(p)
+        return np.array(dis)
+
     def evalVars(self, Vars):
         kth = self.kth
         fs = []
@@ -82,11 +94,11 @@ class SensorConfigurationProblem(ea.Problem):
             pop = np.array(pop).squeeze()
             pop = self.sort_pop(pop)
             norm_pop = (pop - self.Fields[1, :]) / (self.Fields[0, :] - self.Fields[1, :])
-            dis = np.linalg.norm(self.pop_buffer - norm_pop, 2, axis=1)
+            dis = np.linalg.norm(self.pop_buffer - norm_pop, 2, axis=1) / len(pop)
             idxes = np.argpartition(dis, kth=kth)[:kth]
             neigh_fitness = self.fitness_buffer[idxes]
             neigh_dis = dis[idxes]
-            distributions = self.gaussian_distribution(neigh_dis)
+            distributions = self.distribution(neigh_dis)#self.gaussian_distribution(neigh_dis)
             final_fitness = np.sum(neigh_fitness * distributions) / np.sum(distributions) \
                 if np.sum(distributions) != 0 else 0
             self.fitness_dict[tuple(list(pop))] = final_fitness
