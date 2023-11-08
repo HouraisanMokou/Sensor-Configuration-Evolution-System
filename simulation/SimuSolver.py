@@ -133,7 +133,7 @@ class SimuSolver:
             )
 
     # check whether the number of simulation result is correct and return simulation report
-    def check(self, path, sensor_suffixes):
+    def check(self, path, phen, sensor_suffixes):
         '''
         :return: simulation_report={
             "broken_list": [] # population which fail to simulation
@@ -148,8 +148,8 @@ class SimuSolver:
 
         broken_list = []
         pops = []
-        for pop_dir in pops_dir:
-            pop = {"phen": np.array(pop_dir.split('_')[1:]).astype('float')}
+        for pop_idx, pop_dir in enumerate(pops_dir):
+            pop = np.array(phen[pop_idx]).astype('float')  # {"phen": np.array(pop_dir.split('_')[1:]).astype('float')}
             scenario_dir = os.listdir(os.path.join(path, pop_dir))
             scenario_dir.sort()
             if scenario_dir != self.scenario_name_list:
@@ -197,11 +197,11 @@ class SimuSolver:
         for task in self.simu_tasks:  # simulate
             task.set_iter(self.iter)
             task.run()
-        res = self.check(os.path.join(self.output_result_path, str(self.iter)),
-                         population_meta[1])  # population_meta[1]: sensor_suffixes
-        if len(res["broken_list"]) != 0:
-            tmp_res = self.rerun(res["broken_list"], population_meta[1])
-            res["pop"] += tmp_res["pop"]
+        res = self.check(os.path.join(self.output_result_path, str(self.iter)), population_meta[1],
+                         population_meta[2])  # population_meta[1]: sensor_suffixes
+        # if len(res["broken_list"]) != 0:
+        #     tmp_res = self.rerun(res["broken_list"], population_meta[1])
+        #     res["pop"] += tmp_res["pop"]
         return res
 
     def setup(self, population_meta):
@@ -211,10 +211,10 @@ class SimuSolver:
         for task in self.simu_tasks:  # simulate
             task.set_iter(0)
             task.setup()
-        res = self.check(os.path.join(self.output_result_path, str(0)), population_meta[1])
-        if len(res["broken_list"]) != 0:
-            tmp_res = self.rerun(res["broken_list"], population_meta[1])
-            res["pop"] += tmp_res["pop"]
+        res = self.check(os.path.join(self.output_result_path, str(0)), population_meta[1], population_meta[2])
+        # if len(res["broken_list"]) != 0:
+        #     tmp_res = self.rerun(res["broken_list"], population_meta[1])
+        #     res["pop"] += tmp_res["pop"]
         return res
 
     def rerun(self, broken_list, sensor_suffixes, iter=0):

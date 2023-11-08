@@ -60,7 +60,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
             self.lb += sensor.lb
             self.ub += sensor.ub
             cnt += sensor.dim
-        self.best_phen=[]
+        self.best_phen = []
 
     def update_logger(self, detail_report):
         self.__append_logger_elements("gen", self.iter)
@@ -80,7 +80,7 @@ class GeatpySupportedOptimSolver(OptimSolver):
                 self.__append_logger_elements(f"std_{k}", np.std(detail_report[k]))
         objV = np.array(self.algorithm.population.ObjV)
         best_idx = np.argmax(objV)
-        self.best_phen.append(self.algorithm.population.Phen[best_idx,:])
+        self.best_phen.append(self.algorithm.population.Phen[best_idx, :])
         self.__append_logger_elements("fitness_maximum", np.max(objV))
         self.__append_logger_elements("fitness_minimum", np.min(objV))
         self.__append_logger_elements("fitness_mean", np.mean(objV))
@@ -241,9 +241,10 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         self.algorithm.setup()
         self.problem.set_Fields(self.algorithm.population.Field)
         self.algorithm.population.Phen = self.algorithm.population.decoding()
-        names_list = self.write(self.algorithm.population.Phen, os.path.join(self.output_yaml_path, str(self.iter)))
+        names_list, phen = self.write(self.algorithm.population.Phen,
+                                      os.path.join(self.output_yaml_path, str(self.iter)))
         logger.info("initial population (double sizes) is output and ready to simulate")
-        return names_list, [s.result_suffix for s in self.sensors]
+        return names_list,phen, [s.result_suffix for s in self.sensors]
 
     def run(self, eval_result):
         self.iter += 1
@@ -258,7 +259,7 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         experiment_pop = self.algorithm.run_online()
         experiment_pop.Phen = experiment_pop.decoding()
         self.algorithm.population.Phen = self.algorithm.population.decoding()
-        name_list = self.write(experiment_pop.Phen, os.path.join(self.output_yaml_path, str(self.iter)))
+        name_list, phen = self.write(experiment_pop.Phen, os.path.join(self.output_yaml_path, str(self.iter)))
         logger.info(f"generation [{self.iter}] is generated")
         self.update_logger(eval_result["detail_report"])
-        return name_list, [s.result_suffix for s in self.sensors]
+        return name_list,phen, [s.result_suffix for s in self.sensors]

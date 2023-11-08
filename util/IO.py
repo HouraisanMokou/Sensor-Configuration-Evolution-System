@@ -4,7 +4,8 @@ import os
 import open3d as o3d
 from PIL import Image
 
-def write_best_configuration(p,iter, output_yaml_path, sensors):
+
+def write_best_configuration(p, iter, output_yaml_path, sensors):
     name_list = []
     cnt = 0
     yaml_dict = []
@@ -21,6 +22,7 @@ def write_best_configuration(p,iter, output_yaml_path, sensors):
 
     return name_list
 
+
 def write_configuration(phen, output_yaml_path, sensors):
     name_list = []
     for i, p in enumerate(list(phen)):
@@ -32,11 +34,11 @@ def write_configuration(phen, output_yaml_path, sensors):
             yaml_dict.append(
                 sensor.phen2yaml(phen_slice)
             )
-        yaml_name = f"{str(i).rjust(4, '0')}_" + "_".join([str(_) for _ in p]) + ".yaml"
+        yaml_name = f"{str(i).rjust(4, '0')}_" + "_".join([str(_)[:5] for _ in p]) + ".yaml"
         name_list.append(yaml_name)
         with open(os.path.join(output_yaml_path, yaml_name), 'w') as f:
             yaml.dump(yaml_dict, f)
-    return name_list
+    return name_list,phen
 
 
 def read_data(url):
