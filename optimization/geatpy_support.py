@@ -103,7 +103,7 @@ class SensorConfigurationProblem(ea.Problem):
                 if np.sum(distributions) != 0 else 0
             self.fitness_dict[tuple(list(pop))] = final_fitness
             fs.append(final_fitness)
-        res = np.array(fs)/np.sum(fs)
+        res = np.array(fs)
         res = np.expand_dims(res, 1)
         return res
 

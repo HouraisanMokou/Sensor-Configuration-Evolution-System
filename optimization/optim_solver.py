@@ -85,14 +85,16 @@ class GeatpySupportedOptimSolver(OptimSolver):
         self.__append_logger_elements("fitness_minimum", np.min(objV))
         self.__append_logger_elements("fitness_mean", np.mean(objV))
 
+        if self.iter == 1:
+            self.worst_iter1 = np.min(objV)
         self.log()
 
     def log(self):
         logger.info(f"start to log for [{self.iter}]")
         plt.figure()
-        plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_maximum"])
-        plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_minimum"])
-        plt.plot(self.state_logger["gen"], self.state_logger[f"fitness_mean"])
+        plt.plot(self.state_logger["gen"], np.exp(self.state_logger[f"fitness_maximum"]-self.worst_iter1))
+        plt.plot(self.state_logger["gen"], np.exp(self.state_logger[f"fitness_minimum"]-self.worst_iter1))
+        plt.plot(self.state_logger["gen"], np.exp(self.state_logger[f"fitness_mean"]-self.worst_iter1))
         plt.legend(["max", "min", "avg"])
         plt.savefig(os.path.join(self.output_result_path, f"evolution.png"))
         plt.close()
@@ -244,7 +246,7 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         names_list, phen = self.write(self.algorithm.population.Phen,
                                       os.path.join(self.output_yaml_path, str(self.iter)))
         logger.info("initial population (double sizes) is output and ready to simulate")
-        return names_list,phen, [s.result_suffix for s in self.sensors]
+        return names_list, phen, [s.result_suffix for s in self.sensors]
 
     def run(self, eval_result):
         self.iter += 1
@@ -262,4 +264,4 @@ class DE_OptimSolver(GeatpySupportedOptimSolver):
         name_list, phen = self.write(experiment_pop.Phen, os.path.join(self.output_yaml_path, str(self.iter)))
         logger.info(f"generation [{self.iter}] is generated")
         self.update_logger(eval_result["detail_report"])
-        return name_list,phen, [s.result_suffix for s in self.sensors]
+        return name_list, phen, [s.result_suffix for s in self.sensors]
