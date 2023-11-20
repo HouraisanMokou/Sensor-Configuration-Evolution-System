@@ -75,13 +75,16 @@ class SimuTask:
         self.system_call(self.start_CSCI_cmd, self.start_carla_cmd)
 
     def run(self):
-        logger.info("Simulation module has start to simulate this generation")
+        logger.info("Simulation module has started to simulate this generation")
         self.system_call(self.start_CSCI_cmd, self.start_carla_cmd)
 
     def rerun(self):
-        logger.info("Simulation module has start to simulate this generation")
+        logger.info("Simulation module has started to rerun this generation")
         self.system_call(self.rerun_CSCI_cmd, self.start_carla_cmd)
 
+    def delete_data(self):
+        logger.info("Simulation module is deleting simulate data")
+        shutil.rmtree(os.path.join(self.output_path, str(iter)))
 
 class SimuSolver:
 
@@ -199,6 +202,8 @@ class SimuSolver:
             task.run()
         res = self.check(os.path.join(self.output_result_path, str(self.iter)), population_meta[1],
                          population_meta[2])  # population_meta[1]: sensor_suffixes
+        for task in self.simu_tasks:
+            task.delete_data()
         # if len(res["broken_list"]) != 0:
         #     tmp_res = self.rerun(res["broken_list"], population_meta[1])
         #     res["pop"] += tmp_res["pop"]
@@ -212,6 +217,8 @@ class SimuSolver:
             task.set_iter(0)
             task.setup()
         res = self.check(os.path.join(self.output_result_path, str(0)), population_meta[1], population_meta[2])
+        for task in self.simu_tasks:
+            task.delete_data()
         # if len(res["broken_list"]) != 0:
         #     tmp_res = self.rerun(res["broken_list"], population_meta[1])
         #     res["pop"] += tmp_res["pop"]
