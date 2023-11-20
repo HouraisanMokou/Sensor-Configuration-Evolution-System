@@ -345,7 +345,7 @@ class SSIM(EvaluationMethods):
             scenario_res = np.mean(scenario_res)
             score.append(scenario_res)
         score = - np.mean(score)  # ssim is higher, the configuration is more similar
-        return score / 0.04  # 0.04 is prior std
+        return score / 0.008  # 0.008 is prior std
 
 
 class LidarCoverage(EvaluationMethods):
@@ -385,6 +385,8 @@ class LidarCoverage(EvaluationMethods):
                             (data[0, :] > -1.5) & (data[0, :] < 1.5) & (data[1, :] > -0.5) & (data[1, :] < 0.5)
                         )
                         data = data[:, mask1]
+                        # mask2 = (data[0, :] > -50) & (data[0, :] < 50) & (data[1, :] > -20) & (data[1, :] < 20)
+                        # data = data[:, mask1 & mask2]
                         total_data = data if total_data is None else np.hstack([total_data, data])
                 if total_data is None:
                     return 0
@@ -439,7 +441,8 @@ class WeightedLidarCoverage(EvaluationMethods):
                         mask1 = np.logical_not(
                             (data[0, :] > -1.5) & (data[0, :] < 1.5) & (data[1, :] > -0.5) & (data[1, :] < 0.5)
                         )
-                        data = data[:, mask1]
+                        mask2 = (data[0, :] > -50) & (data[0, :] < 50) & (data[1, :] > -20) & (data[1, :] < 20) & (data[2, :] < 3.9)  & (data[2, :] > 0 )
+                        data = data[:, mask1 & mask2]
                         total_data = data if total_data is None else np.hstack([total_data, data])
                 if total_data is None:
                     return 0
@@ -450,7 +453,7 @@ class WeightedLidarCoverage(EvaluationMethods):
                 # count = np.array(list(counter.values()))
                 weighted = np.log2(self.x_dis[pos[:, 0].astype(int) + int(50 / self.voxel_len)] + 1) * \
                            np.log2(self.y_dis[pos[:, 1].astype(int) + int(20 / self.voxel_len)] + 1) * \
-                           np.log2(self.z_dis[pos[:, 2].astype(int)] + 1)
+                           np.log2(self.z_dis[pos[:, 2].astype(int)] +1)
                 score = np.sum(weighted)  # np.sum(np.log2(count + 1))
                 scores.append(score)
         return np.mean(scores) / 500
@@ -495,6 +498,8 @@ class LidarPerceptionEntropy(EvaluationMethods):
                             (data[0, :] > -1.5) & (data[0, :] < 1.5) & (data[1, :] > -0.5) & (data[1, :] < 0.5)
                         )
                         data = data[:, mask1]
+                        # mask2 = (data[0, :] > -50) & (data[0, :] < 50) & (data[1, :] > -20) & (data[1, :] < 20)
+                        # data = data[:, mask1 & mask2]
                         # mask2 = ((data[0, :] > -self.x_lim) and (data[0, :] < self.x_lim) and (
                         #             data[1, :] > -self.y_lim) and (data[1, :] < self.y_lim)) and (
                         #                     data[2, :] < self.z_lim)

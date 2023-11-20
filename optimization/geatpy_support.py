@@ -98,7 +98,7 @@ class SensorConfigurationProblem(ea.Problem):
             idxes = np.argpartition(dis, kth=kth)[:kth]
             neigh_fitness = self.fitness_buffer[idxes]
             neigh_dis = dis[idxes]
-            distributions = self.distribution(neigh_dis)#self.gaussian_distribution(neigh_dis)
+            distributions = self.gaussian_distribution(neigh_dis,sigma=1/3/len(pop))
             final_fitness = np.sum(neigh_fitness * distributions) / np.sum(distributions) \
                 if np.sum(distributions) != 0 else 0
             self.fitness_dict[tuple(list(pop))] = final_fitness
