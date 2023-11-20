@@ -14,7 +14,7 @@ from evaluation.eval_methods import *
 class MonteCarloSampler:
     sensor_dict = {
         "lidar": Lidar,
-        "camera": Camera,
+        "camera": DefinedFovCamera,
         "non_rotation_camera": NonRotationCamera
     }
     method_dict = {
@@ -55,14 +55,15 @@ class MonteCarloSampler:
         self.carla_path = runtime["simulation"]["carla_paths"][0]
         self.CSCI_path = runtime["simulation"]["CSCI_path"]
         self.count = runtime["simulation"]["slice_count"]
-        self.workspace = os.path.join(runtime["system"]["workspace_path"], "monte_carlo")
+        self.workspace = os.path.join(runtime["system"]["workspace_path"], "monte_carlo2")
         self.input_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_input_dirname']}")
         self.output_path = os.path.abspath(f"{self.workspace}/{runtime['system']['simu_result_dirname']}")
         self.start_carla_cmd = f"{self.carla_path} -carla-rpc-port={self.port}"
         self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}"
-        self.report_path = "collected_data/double_non_rotation2/res.csv"
+        self.report_path = "./collected_data/single/res.csv"
+        self.re_report_path= 'collected_data/single/res.csv_bp'
 
-        self.simu = False  # True
+        self.simu = True
 
     def run(self, batch=200, append=True):
         sampled = self.random_sample(batch)
@@ -167,15 +168,17 @@ class MonteCarloSampler:
 
     def get_columns_name(self):
         attr_names = [str(i) for i in range(self.dim)]
+
         method_names = [m.result_name for m in self.methods]
         column_names = attr_names + method_names + ["total"]
         return column_names
 
 
-with open("config/MCtest_double_camera.yaml", 'r') as f:
+with open("config/MCtest_single_camera.yaml", 'r') as f:
     yaml_dict = yaml.load(f, yaml.FullLoader)
     sampler = MonteCarloSampler(yaml_dict)
-    sampler.run()
+    #sampler.run(1000,append=False)
+    sampler.rerun_evaluation()
 # sampler.run(2)
 # sampled = sampler.random_sample(2)
 # sampler.write_yaml_dicts(sampler.batched_phen2yaml(sampled), "./workspace/monte_carlo")

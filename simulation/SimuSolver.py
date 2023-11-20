@@ -152,7 +152,7 @@ class SimuSolver:
         broken_list = []
         pops = []
         for pop_idx, pop_dir in enumerate(pops_dir):
-            pop = np.array(phen[pop_idx]).astype('float')  # {"phen": np.array(pop_dir.split('_')[1:]).astype('float')}
+            pop = {'phen': np.array(phen[pop_idx]).astype('float')}  # {"phen": np.array(pop_dir.split('_')[1:]).astype('float')}
             scenario_dir = os.listdir(os.path.join(path, pop_dir))
             scenario_dir.sort()
             if scenario_dir != self.scenario_name_list:
