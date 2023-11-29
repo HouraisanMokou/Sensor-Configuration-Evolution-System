@@ -61,12 +61,14 @@ class EvolutionSolver(BaseSolver):  # geatpy support
         population_meta = self.optimization_solver.setup()
         simu_report = self.simu_solver.setup(population_meta)
         eval_result = self.evaluation_solver.setup(simu_report)
+        self.simu_solver.delete_data()
 
         for i in range(0, self.optimization_setting["parameters"]["generation"]):
             logger.info("Start of new generation")
             population_meta = self.optimization_solver.run(eval_result)
             simu_report = self.simu_solver.run(population_meta)
             eval_result = self.evaluation_solver.run(simu_report)
+            self.simu_solver.delete_data()
             logger.info("End of this new generation")
 
         self.simu_solver.close()

@@ -40,13 +40,13 @@ class SimuTask:
 
         self.scenario_info = scenario_info
         self.start_carla_cmd = f"{self.carla_path} -carla-rpc-port={self.port}"
-        self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}  -r{self.wait_record_time}"
-        self.rerun_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.rerun_input} -o {self.rerun_output} -c {self.count}  -r{self.wait_record_time}"
+        self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.input_path} -o {self.output_path} -c {self.count}  -r {self.wait_record_time}"
+        self.rerun_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {self.rerun_input} -o {self.rerun_output} -c {self.count}  -r {self.wait_record_time}"
         self.carla_pid = None
 
     def set_iter(self, iter):
-        self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {os.path.join(self.input_path, str(iter))} -o {os.path.join(self.output_path, str(iter))} -c {self.count}  -r{self.wait_record_time}"
-        self.rerun_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {os.path.join(self.rerun_input, str(iter))} -o {os.path.join(self.rerun_output, str(iter))} -c {self.count}  -r{self.wait_record_time}"
+        self.start_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {os.path.join(self.input_path, str(iter))} -o {os.path.join(self.output_path, str(iter))} -c {self.count}  -r {self.wait_record_time}"
+        self.rerun_CSCI_cmd = f"cd {self.CSCI_path} && python main.py --carla-port {self.port} -i {os.path.join(self.rerun_input, str(iter))} -o {os.path.join(self.rerun_output, str(iter))} -c {self.count}  -r {self.wait_record_time}"
 
     def system_call(self, CSCI_cmd, carla_cmd, cnt=0):
         res_signal = os.system(CSCI_cmd)
@@ -82,9 +82,10 @@ class SimuTask:
         logger.info("Simulation module has started to rerun this generation")
         self.system_call(self.rerun_CSCI_cmd, self.start_carla_cmd)
 
-    def delete_data(self):
+    def delete_data(self, iteration):
         logger.info("Simulation module is deleting simulate data")
-        shutil.rmtree(os.path.join(self.output_path, str(iter)))
+        shutil.rmtree(os.path.join(self.output_path, str(iteration)))
+
 
 class SimuSolver:
 
@@ -152,7 +153,8 @@ class SimuSolver:
         broken_list = []
         pops = []
         for pop_idx, pop_dir in enumerate(pops_dir):
-            pop = {'phen': np.array(phen[pop_idx]).astype('float')}  # {"phen": np.array(pop_dir.split('_')[1:]).astype('float')}
+            pop = {'phen': np.array(phen[pop_idx]).astype(
+                'float')}  # {"phen": np.array(pop_dir.split('_')[1:]).astype('float')}
             scenario_dir = os.listdir(os.path.join(path, pop_dir))
             scenario_dir.sort()
             if scenario_dir != self.scenario_name_list:
@@ -202,8 +204,8 @@ class SimuSolver:
             task.run()
         res = self.check(os.path.join(self.output_result_path, str(self.iter)), population_meta[1],
                          population_meta[2])  # population_meta[1]: sensor_suffixes
-        for task in self.simu_tasks:
-            task.delete_data()
+        # for task in self.simu_tasks:
+        #     task.delete_data()
         # if len(res["broken_list"]) != 0:
         #     tmp_res = self.rerun(res["broken_list"], population_meta[1])
         #     res["pop"] += tmp_res["pop"]
@@ -217,12 +219,16 @@ class SimuSolver:
             task.set_iter(0)
             task.setup()
         res = self.check(os.path.join(self.output_result_path, str(0)), population_meta[1], population_meta[2])
-        for task in self.simu_tasks:
-            task.delete_data()
+        # for task in self.simu_tasks:
+        #     task.delete_data()
         # if len(res["broken_list"]) != 0:
         #     tmp_res = self.rerun(res["broken_list"], population_meta[1])
         #     res["pop"] += tmp_res["pop"]
         return res
+
+    def delete_data(self):
+        for task in self.simu_tasks:
+            task.delete_data(self.iter)
 
     def rerun(self, broken_list, sensor_suffixes, iter=0):
         logger.info(f"start to resimulate {len(broken_list)} files. [times: {iter + 1}]")
